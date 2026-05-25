@@ -1,0 +1,66 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+      dockerfile: docker/Dockerfile
+    container_name: laravel_app_dev
+    command: sh -c "php artisan key:generate && php artisan migrate && php artisan serve --host=0.0.0.0 --port=8000"
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - .:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:15-alpine
+    container_name: laravel_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-dev}
+      POSTGRES_USER: ${DB_USERNAME:-dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dev}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  pgvector:
+    image: pgvector/pgvector:pg15
+    container_name: laravel_pgvector_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${VECTOR_DB_DATABASE:-dev}
+      POSTGRES_USER: ${VECTOR_DB_USERNAME:-dev}
+      POSTGRES_PASSWORD: ${VECTOR_DB_PASSWORD:-dev}
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+      #- ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${VECTOR_DB_USERNAME:-dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  scheduler:
+    build:
+      context: .
+      target: dev
+      dockerfile: docker/Dockerfile
+    container_name: laravel_app_scheduler
+    restart: unless-stopped
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
+    command: php artisan schedule:work
+
+volumes:
+  pg_data:
+  pgvector_data:
