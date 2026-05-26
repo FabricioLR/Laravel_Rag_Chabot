@@ -73,14 +73,12 @@ class IngestPost implements ShouldQueue
 
             if (empty($posts)) {
                 throw new Exception("Post ID {$postId} não foi encontrado no WordPress.");
-                return;
             }
             
             $post = $posts[0];
 
             if (!$post || empty($post->post_content)) {
                 throw new Exception("Conteúdo do post ID {$postId} não foi encontrado ou está vazio.");
-                return;
             }
 
             $rawHtmlContent = $post->post_content;
@@ -113,7 +111,6 @@ class IngestPost implements ShouldQueue
                         'status' => $hfResponse->status(),
                         'body' => $hfResponse->body()
                     ]));
-                    continue;
                 }
 
                 $vectorArray = $hfResponse->json();
@@ -128,7 +125,7 @@ class IngestPost implements ShouldQueue
                     'chunk_index' => $index
                 ]);
 
-                DB::connection('pgvector')->statement("
+                $result = DB::connection('pgvector')->insert("
                     INSERT INTO vectors (text, metadata, embedding, created_at, updated_at)
                     VALUES (:text, :metadata, :embedding::vector, NOW(), NOW())
                 ", [
@@ -137,12 +134,16 @@ class IngestPost implements ShouldQueue
                     'embedding' => $vectorString
                 ]);
 
+                if (!$result){
+                    throw new Exception("Insert into vectors table failed");
+                }
+
                 Log::info("Chunk {$index} for post {$postId} successfully indexed.", ['hf_time_ms' => $hfDuration]);
             }
 
             Log::info("Finished ingestion pipeline for post ID: {$postId}. Total chunks indexed: " . count($chunks));
         } catch (Throwable $th) {
-            throw new Exception("Error occurred while processing post ID: {$postId}" . json_encode(['exception' => $th]));
+            throw new Exception("Error occurred while processing post ID: {$postId} " . $th->getMessage());
         }
     }
 
