@@ -15,7 +15,6 @@ use Carbon\Carbon;
 #[Description('Fetch new, updated or unindexed WordPress posts')]
 class FetchWordPressPosts extends Command
 {
-   
     public function handle()
     {
         Log::info('Tarefa agendada: wp:fetch-posts iniciada.');
@@ -26,6 +25,7 @@ class FetchWordPressPosts extends Command
         $lastIndexedPosts = Cache::get('wp_last_indexed_posts', [0]);
 
         $lastIndexedPostsString = implode(', ', $lastIndexedPosts);
+        $wp_table_prefix = env('WP_DB_TABLE_PREFIX', 'wp_');
 
         try {
             $posts = DB::connection('wordpress')->select("
@@ -33,13 +33,13 @@ class FetchWordPressPosts extends Command
                     p.ID, p.post_content, p.post_modified, p.post_modified_gmt, p.post_title, p.post_type, p.guid,
                     (
                         SELECT GROUP_CONCAT(t.name SEPARATOR ', ')
-                        FROM vpnym_term_relationships r
-                        INNER JOIN vpnym_term_taxonomy tt ON r.term_taxonomy_id = tt.term_taxonomy_id
-                        INNER JOIN vpnym_terms t ON tt.term_id = t.term_id
+                        FROM {$wp_table_prefix}term_relationships r
+                        INNER JOIN {$wp_table_prefix}term_taxonomy tt ON r.term_taxonomy_id = tt.term_taxonomy_id
+                        INNER JOIN {$wp_table_prefix}terms t ON tt.term_id = t.term_id
                         WHERE r.object_id = p.ID 
                           AND tt.taxonomy = 'category'
                     ) AS categories
-                FROM vpnym_posts p
+                FROM {$wp_table_prefix}posts p
                 WHERE 
                     (p.post_status = 'publish' AND p.post_type IN ('post', 'page') AND p.post_content != '')
                     AND (
@@ -63,7 +63,7 @@ class FetchWordPressPosts extends Command
             IngestPost::dispatch([
                 'id'         => $post->ID,
                 'title'      => $post->post_title,
-                'content'    => $post->post_content,
+                //'content'    => $post->post_content,
                 'url'        => $post->guid,
                 'categories' => $post->categories ?? 'Uncategorized'
             ]);

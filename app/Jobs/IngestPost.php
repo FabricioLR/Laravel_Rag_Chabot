@@ -29,10 +29,23 @@ class IngestPost implements ShouldQueue
         $postId = $this->postData['id'];
         $title = $this->postData['title'];
         $categories = $this->postData['categories'];
-        $rawHtmlContent = $this->postData['content'];
+        //$rawHtmlContent = $this->postData['content'];
         $url = $this->postData['url'];
 
         Log::info("Starting ingestion processing for post ID: {$postId}");
+
+        $post = DB::connection('wordpress')
+            ->table(env('WP_DB_TABLE_PREFIX', 'wp_') . 'posts')
+            ->where('ID', $postId)
+            ->select('post_content')
+            ->first();
+
+        if (!$post || empty($post->post_content)) {
+            Log::warning("Conteúdo do post ID {$postId} não foi encontrado ou está vazio.");
+            return;
+        }
+
+        $rawHtmlContent = $post->post_content;
 
         //$cleanHtmlContent = str_replace("\n", '', $rawHtmlContent);
         $cleanHtmlContent = preg_replace('//s', '', $rawHtmlContent);
