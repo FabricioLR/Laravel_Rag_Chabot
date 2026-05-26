@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      target: prod
+      dockerfile: docker/Dockerfile
+    container_name: chatbot_app_prod
+    image: chatbot:latest
+    user: "www-data:www-data"
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    volumes:
+      - prod_storage:/var/www/storage
+    networks:
+      - chatbot_net
+
+  queue-worker:
+    image: chatbot:latest
+    container_name: chatbot_app_queue
+    restart: unless-stopped
+    user: "www-data:www-data"
+    env_file:
+      - .env.prod
+    volumes:
+      - prod_storage:/var/www/storage
+    command: php /var/www/artisan queue:work --verbose --tries=3 --timeout=90
+    depends_on:
+      - app
+
+  web:
+    build:
+      context: .
+      target: nginx
+      dockerfile: docker/Dockerfile
+    container_name: chatbot_nginx_prod
+    image: chatbot_nginx:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      - app
+    networks:
+      - chatbot_net
+
+networks:
+  chatbot_net:
+    driver: bridge
+  
+volumes:
+  prod_storage:
