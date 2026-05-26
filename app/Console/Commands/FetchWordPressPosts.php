@@ -19,18 +19,17 @@ class FetchWordPressPosts extends Command
     {
         Log::info('Tarefa agendada: wp:fetch-posts iniciada.');
         $startTime = microtime(true);
-
         
-        $lastExecution = Cache::get('wp_last_execution', Carbon::now()->subDay()->toDateTimeString());
+        $lastExecution = Cache::get('wp_last_execution', Carbon::now()->toDateTimeString());
         $lastIndexedPosts = Cache::get('wp_last_indexed_posts', [0]);
 
-        $lastIndexedPostsString = implode(', ', $lastIndexedPosts);
+        $lastIndexedPostsString = implode(',', $lastIndexedPosts);
         $wp_table_prefix = env('WP_DB_TABLE_PREFIX', 'wp_');
 
         try {
             $posts = DB::connection('wordpress')->select("
                 SELECT 
-                    p.ID, p.post_content, p.post_modified, p.post_modified_gmt, p.post_title, p.post_type, p.guid,
+                    p.ID, p.post_modified, p.post_modified_gmt, p.post_title, p.post_type, p.guid,
                     (
                         SELECT GROUP_CONCAT(t.name SEPARATOR ', ')
                         FROM {$wp_table_prefix}term_relationships r
@@ -53,35 +52,35 @@ class FetchWordPressPosts extends Command
                 'last_execution' => $lastExecution
             ]);
 
+            
             if (empty($posts)) {
                 Log::info('Nenhum post novo ou modificado foi encontrado no WordPress neste minuto.');
                 return Command::SUCCESS;
             }
-
+            
             $post = $posts[0];
+            
+            $overrideIndexing = false;
+            
+            if (in_array($post->ID, $lastIndexedPosts)) {
+                $overrideIndexing = true;
+            }
 
             IngestPost::dispatch([
                 'id'         => $post->ID,
                 'title'      => $post->post_title,
-                //'content'    => $post->post_content,
                 'url'        => $post->guid,
-                'categories' => $post->categories ?? 'Uncategorized'
+                'categories' => $post->categories ?? 'Uncategorized',
+                'override_indexing' => $overrideIndexing
             ]);
 
             Log::info("Post ID {$post->ID} [{$post->post_title}] enviado para a fila de ingestão.");
-
             
-            if (Carbon::parse($post->post_modified_gmt)->gt(Carbon::parse($lastExecution))) {
-                Cache::put('wp_last_execution', $post->post_modified_gmt);
-                
-                $lastIndexedPosts = [$post->ID];
-            } else {
-                if (!in_array($post->ID, $lastIndexedPosts)) {
-                    $lastIndexedPosts[] = $post->ID;
-                }
-            }
+            $lastIndexedPosts[] = $post->ID;
+            $lastExecution = Carbon::now()->toDateTimeString();
             
-            Cache::put('wp_last_indexed_posts', $lastIndexedPosts);
+            if (!$overrideIndexing) Cache::put('wp_last_indexed_posts', $lastIndexedPosts);
+            Cache::put('wp_last_execution', $lastExecution);
 
             $duration = round((microtime(true) - $startTime) * 1000, 2);
             Log::info('Sincronização do post realizada com sucesso.', [

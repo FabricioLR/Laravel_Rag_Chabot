@@ -29,8 +29,15 @@ class IngestPost implements ShouldQueue
         $postId = $this->postData['id'];
         $title = $this->postData['title'];
         $categories = $this->postData['categories'];
-        //$rawHtmlContent = $this->postData['content'];
         $url = $this->postData['url'];
+        $overrideIndexing = $this->postData['override_indexing'] ?? false;
+
+        if ($overrideIndexing) {
+            Log::info("Override de indexação ativado para post ID {$postId}. Forçando reindexação.");
+            DB::connection('pgvector')->statement("DELETE FROM vectors WHERE metadata->>'source_post_id' = :postId", [
+                'postId' => (string)$postId
+            ]);
+        }
 
         Log::info("Starting ingestion processing for post ID: {$postId}");
 
