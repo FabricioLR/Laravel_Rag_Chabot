@@ -29,15 +29,7 @@ class FetchWordPressPosts extends Command
         try {
             $posts = DB::connection('wordpress')->select("
                 SELECT 
-                    p.ID, p.post_modified, p.post_modified_gmt, p.post_title, p.post_type, p.guid,
-                    (
-                        SELECT GROUP_CONCAT(t.name SEPARATOR ', ')
-                        FROM {$wp_table_prefix}term_relationships r
-                        INNER JOIN {$wp_table_prefix}term_taxonomy tt ON r.term_taxonomy_id = tt.term_taxonomy_id
-                        INNER JOIN {$wp_table_prefix}terms t ON tt.term_id = t.term_id
-                        WHERE r.object_id = p.ID 
-                          AND tt.taxonomy = 'category'
-                    ) AS categories
+                    p.ID, p.post_title
                 FROM {$wp_table_prefix}posts p
                 WHERE 
                     (p.post_status = 'publish' AND p.post_type IN ('post', 'page') AND p.post_content != '')
@@ -66,27 +58,24 @@ class FetchWordPressPosts extends Command
                 $overrideIndexing = true;
             }
 
+            if (!$overrideIndexing) $lastIndexedPosts[] = $post->ID;
+            $lastExecution = Carbon::now()->toDateTimeString();
+            
+            Cache::put('wp_last_indexed_posts', $lastIndexedPosts);
+            Cache::put('wp_last_execution', $lastExecution);
+
             IngestPost::dispatch([
                 'id'         => $post->ID,
-                'title'      => $post->post_title,
-                'url'        => $post->guid,
-                'categories' => $post->categories ?? 'Uncategorized',
                 'override_indexing' => $overrideIndexing
             ]);
 
             Log::info("Post ID {$post->ID} [{$post->post_title}] enviado para a fila de ingestão.");
             
-            $lastIndexedPosts[] = $post->ID;
-            $lastExecution = Carbon::now()->toDateTimeString();
-            
-            if (!$overrideIndexing) Cache::put('wp_last_indexed_posts', $lastIndexedPosts);
-            Cache::put('wp_last_execution', $lastExecution);
-
             $duration = round((microtime(true) - $startTime) * 1000, 2);
             Log::info('Sincronização do post realizada com sucesso.', [
                 'post_id'          => $post->ID,
                 'last_execution'   => Cache::get('wp_last_execution'),
-                'indexed_count'    => count($lastIndexedPosts),
+                'indexed_count'    => count($lastIndexedPosts) - 1,
                 'duration_ms'      => $duration
             ]);
 
