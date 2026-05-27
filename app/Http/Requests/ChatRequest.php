@@ -24,6 +24,7 @@ class ChatRequest extends FormRequest
     {
         return [
             'chatInput' => 'required|string',
+            'sessionId' => 'required|string',
         ];
     }
 }

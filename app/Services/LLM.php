@@ -8,7 +8,7 @@ use Exception;
 
 class LLM
 {
-    public function generateAnswer(string $userInput, string $context): array
+    public function generateAnswer(string $userInput, string $sessionId, string $context, string $conversationHistory): array
     {
         $startTime = microtime(true);
         $apiKey = config('services.groq.api_key', env('GROQ_API_KEY'));
@@ -20,14 +20,22 @@ class LLM
                         "- Seja direto, claro e profissional.\n" .
                         "- Se a resposta não puder ser extraída do contexto fornecido, responda honestamente que não possui essa informação.";
 
-        $prompt = "# [CONTEXTO RECUPERADO / DADOS DA SEARCH]\n" .
-                  "Abaixo estão as informações extraídas da base de conhecimento que podem ajudar a responder à pergunta.\n\n" .
-                  $context . "\n" .
-                  "---\n\n" .
-                  "# [PERGUNTA DO USUÁRIO]\n" .
-                  $userInput . "\n\n" .
-                  "---\n\n" .
-                  "# [RESPOSTA DO ASSISTENTE]\n";
+        $prompt = "# [HISTÓRICO DA CONVERSA]\n" .
+              "Abaixo está o histórico das últimas interações para lhe dar contexto do que foi discutido:\n\n" .
+              $conversationHistory . "\n" .
+              "---\n\n" .
+              "# [CONTEXTO RECUPERADO / DADOS DA SEARCH]\n" .
+              $context . "\n" .
+              "---\n\n" .
+              "# [PERGUNTA ATUAL DO USUÁRIO]\n" .
+              $userInput . "\n\n" .
+              "---\n\n" .
+              "# [RESPOSTA DO ASSISTENTE]\n";
+
+        Log::debug("Full string context compiled for LLM request.", [
+            'session_id' => $sessionId,
+            'full_user_prompt' => $prompt
+        ]);
 
         $response = Http::withToken($apiKey)
             ->post('https://api.groq.com/openai/v1/chat/completions', [

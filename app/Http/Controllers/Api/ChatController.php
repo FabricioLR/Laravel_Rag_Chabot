@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatRequest;
 use App\Services\AnswerGeneration;
+use App\Services\PostCategories;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Exception;
@@ -12,15 +13,27 @@ class ChatController extends Controller
 {
 
     public function __construct(
-        protected AnswerGeneration $pipelineService
+        protected AnswerGeneration $pipelineService,
+        protected PostCategories $categoryService
     ) {}
+
+
+    public function categories(): JsonResponse
+    {
+        $categories = $this->categoryService->getActiveCategories();
+        
+        return response()->json([
+            'categories' => $categories
+        ], 200);
+    }
 
     public function chat(ChatRequest $request): JsonResponse
     {
         $userInput = $request->input('chatInput');
+        $sessionId = $request->input('sessionId');
 
         try {
-            $answer = $this->pipelineService->generate($userInput);
+            $answer = $this->pipelineService->generate($userInput, $sessionId);
             
             return response()->json([
                 'answer' => $answer, 
