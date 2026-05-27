@@ -5,7 +5,7 @@ services:
       target: dev
       dockerfile: docker/Dockerfile
     container_name: laravel_app_dev
-    command: sh -c "php artisan key:generate && php artisan migrate && php artisan serve --host=0.0.0.0 --port=8000"
+    command: sh -c "php artisan key:generate && php artisan migrate --seed && php artisan serve --host=0.0.0.0 --port=8000"
     ports:
       - "8000:8000"
       - "5173:5173"
