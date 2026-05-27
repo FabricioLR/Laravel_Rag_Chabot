@@ -17,20 +17,20 @@ class FetchWordPressPosts extends Command
 {
     public function handle()
     {
-        Log::info('Tarefa agendada: wp:fetch-posts iniciada.');
+        Log::info('WordPress post fetching pipeline initialized.');
         $startTime = microtime(true);
         
         $lastExecution = Cache::get('wp_last_execution', Carbon::now()->toDateTimeString());
         $lastIndexedPosts = Cache::get('wp_last_indexed_posts', [0]);
 
         $lastIndexedPostsString = implode(',', $lastIndexedPosts);
-        $wp_table_prefix = env('WP_DB_TABLE_PREFIX', 'wp_');
+        $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
 
         try {
             $posts = DB::connection('wordpress')->select("
                 SELECT 
                     p.ID, p.post_title
-                FROM {$wp_table_prefix}posts p
+                FROM {$wpTablePrefix}posts p
                 WHERE 
                     (p.post_status = 'publish' AND p.post_type IN ('post', 'page') AND p.post_content != '')
                     AND (
@@ -44,48 +44,50 @@ class FetchWordPressPosts extends Command
                 'last_execution' => $lastExecution
             ]);
 
-            
             if (empty($posts)) {
-                Log::info('Nenhum post novo ou modificado foi encontrado no WordPress neste minuto.');
+                Log::info('No new or modified WordPress posts found in current execution window.', [
+                    'last_execution_cutoff' => $lastExecution
+                ]);
                 return Command::SUCCESS;
             }
             
             $post = $posts[0];
-            
-            $overrideIndexing = false;
-            
-            if (in_array($post->ID, $lastIndexedPosts)) {
-                $overrideIndexing = true;
-            }
+            $overrideIndexing = in_array($post->ID, $lastIndexedPosts);
 
-            if (!$overrideIndexing) $lastIndexedPosts[] = $post->ID;
+            if (!$overrideIndexing) {
+                $lastIndexedPosts[] = $post->ID;
+            }
+            
             $lastExecution = Carbon::now()->toDateTimeString();
             
             Cache::put('wp_last_indexed_posts', $lastIndexedPosts);
             Cache::put('wp_last_execution', $lastExecution);
 
             IngestPost::dispatch([
-                'id'         => $post->ID,
+                'id'                => $post->ID,
                 'override_indexing' => $overrideIndexing
             ]);
 
-            Log::info("Post ID {$post->ID} [{$post->post_title}] enviado para a fila de ingestão.");
-            
             $duration = round((microtime(true) - $startTime) * 1000, 2);
-            Log::info('Sincronização do post realizada com sucesso.', [
-                'post_id'          => $post->ID,
-                'last_execution'   => Cache::get('wp_last_execution'),
-                'indexed_count'    => count($lastIndexedPosts) - 1,
-                'duration_ms'      => $duration
+            
+            Log::info('WordPress post successfully fetched and dispatched to ingestion queue.', [
+                'post_id'           => $post->ID,
+                'post_title'        => $post->post_title,
+                'override_indexing' => $overrideIndexing,
+                'duration_ms'       => $duration,
+                'tracked_ids_count' => count($lastIndexedPosts) - 1,
+                'new_execution_gmt' => $lastExecution
             ]);
 
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            Log::error('Erro crítico ao executar query de sincronização do WordPress.', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::critical('Critical failure during WordPress post synchronization query.', [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage(),
+                'trace'     => $e->getTraceAsString()
             ]);
+            
             return Command::FAILURE;
         }
     }
