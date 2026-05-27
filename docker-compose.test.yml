@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      target: test
+      dockerfile: docker/Dockerfile
+    command: sh -c "php artisan migrate --force --env=test && php artisan test"
+    container_name: laravel_app_test
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - chatbot_test_net
+
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: laravel_db_test
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - chatbot_test_net
+
+networks:
+  chatbot_test_net:
+    driver: bridge

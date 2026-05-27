@@ -27,14 +27,15 @@ RUN composer install && npm install && npm run build
 
 
 FROM base AS test
-COPY . .
+COPY --exclude=.env --exclude=.env.prod . .
 COPY --from=build-assets /var/www/public/build ./public/build
 COPY --from=build-assets /var/www/vendor ./vendor
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache .
+USER www-data
 
 
 FROM base AS prod
-COPY . .
+COPY --exclude=.env --exclude=.env.test . .
 COPY --from=build-assets /var/www/public/build ./public/build
 COPY --from=build-assets /var/www/vendor ./vendor
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache .

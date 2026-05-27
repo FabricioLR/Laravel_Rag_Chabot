@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+class LLM
+{
+    public function generateAnswer(string $userInput, string $context): array
+    {
+        $startTime = microtime(true);
+        $apiKey = config('services.groq.api_key', env('GROQ_API_KEY'));
+
+        $systemPrompt = "Você é um assistente virtual especialista no sistema ERP. Seu objetivo é responder às dúvidas dos usuários com base EXCLUSIVAMENTE nos fragmentos de documentos fornecidos abaixo.\n" .
+                        "REGRAS OBRIGATÓRIAS E FORMATAÇÃO:\n" .
+                        "- Sempre que você utilizar uma informação de um bloco de contexto para responder ao usuário, você DEVE incluir o link da 'Fonte' correspondente logo após a afirmação (ex: [Texto do Link](url_da_fonte)).\n" .
+                        "- Nunca invente URLs. Use estritamente as URLs fornecidas dentro das tags de contexto.\n" .
+                        "- Seja direto, claro e profissional.\n" .
+                        "- Se a resposta não puder ser extraída do contexto fornecido, responda honestamente que não possui essa informação.";
+
+        $prompt = "# [CONTEXTO RECUPERADO / DADOS DA SEARCH]\n" .
+                  "Abaixo estão as informações extraídas da base de conhecimento que podem ajudar a responder à pergunta.\n\n" .
+                  $context . "\n" .
+                  "---\n\n" .
+                  "# [PERGUNTA DO USUÁRIO]\n" .
+                  $userInput . "\n\n" .
+                  "---\n\n" .
+                  "# [RESPOSTA DO ASSISTENTE]\n";
+
+        $response = Http::withToken($apiKey)
+            ->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.1-8b-instant',
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'temperature' => 0.1,
+                'max_tokens' => 1024
+            ]);
+
+        $duration = round((microtime(true) - $startTime) * 1000, 2);
+
+        if ($response->failed()) {
+            Log::error('Failed to get LLM response from Groq API.', [
+                'duration_ms' => $duration,
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            throw new Exception('Failed to generate AI response.');
+        }
+
+        $answer = $response->json()['choices'][0]['message']['content'] ?? 'Desculpe, ocorreu um erro.';
+
+        return [
+            'answer' => $answer,
+            'duration' => $duration
+        ];
+    }
+}
