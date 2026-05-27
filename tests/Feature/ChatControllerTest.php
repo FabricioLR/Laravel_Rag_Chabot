@@ -88,5 +88,5 @@ it('returns a 500 status code when an internal pipeline step fails', function ()
 
     $response->assertStatus(500);
 
-    //expect($response->json('error'))->toBe('Failed to generate text embeddings.');
+    expect($response->json('error'))->toBe('Failed to generate text embeddings.');
 });

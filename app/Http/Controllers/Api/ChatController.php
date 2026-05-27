@@ -7,7 +7,7 @@ use App\Http\Requests\ChatRequest;
 use App\Services\AnswerGeneration;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-
+use Exception;
 class ChatController extends Controller
 {
 
