@@ -19,17 +19,21 @@ class DashboardController extends Controller
         try {
             $metrics = $this->dashboardService->getSyncMetrics();
             $latestPosts = $this->dashboardService->getLatestIndexedPosts();
+            $failedJobs = $this->dashboardService->getLatestFailedJobs();
+            $metrics['latest_posts'] = $latestPosts;
+            $metrics['failed_jobs'] = $failedJobs;
         } catch (Throwable $e) {
             $metrics = [
                 'total_wordpress_posts' => 0,
                 'indexed_posts_count'   => 0,
                 'posts_remaining'       => 0,
                 'sync_progress_percent' => 0.00,
+                'latest_posts'          => [],
+                'failed_jobs'           => [],
                 'error'                 => $e->getMessage()
             ];
         }
 
-        $metrics['latest_posts'] = $latestPosts;
 
         return view('admin.dashboard', $metrics);
     }

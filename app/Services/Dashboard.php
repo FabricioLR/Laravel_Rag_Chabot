@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Exception;
 
 class Dashboard
@@ -94,6 +95,77 @@ class Dashboard
                 'message'   => $e->getMessage()
             ]);
             
+            return [];
+        }
+    }
+
+    public function getLatestFailedJobs(): array
+    {
+        Log::info('Fetching latest failed ingestion jobs for admin dashboard.');
+
+        try {
+            $failedJobs = DB::table('failed_jobs')
+                ->where('payload', 'like', '%App\\\\Jobs\\\\IngestPost%')
+                ->orderBy('failed_at', 'DESC')
+                ->limit(5)
+                ->get();
+
+            if ($failedJobs->isEmpty()) {
+                return [];
+            }
+
+            $processedFailures = [];
+            $postIds = [];
+
+            foreach ($failedJobs as $job) {
+                $payload = json_decode($job->payload, true);
+                
+                $commandString = $payload['data']['command'] ?? '';
+                
+                $postId = null;
+                if (!empty($commandString)) {
+                    $unserializedJob = unserialize($commandString);
+                    if ($unserializedJob && isset($unserializedJob->postData['id'])) {
+                        $postId = $unserializedJob->postData['id'];
+                        $postIds[] = $postId;
+                    }
+                }
+
+                $shortException = Str::limit($job->exception, 150, '...');
+
+                $processedFailures[] = [
+                    'id' => $job->id,
+                    'post_id' => $postId,
+                    'title' => 'Unknown Post Title',
+                    'error' => $shortException,
+                    'failed_at' => $job->failed_at
+                ];
+            }
+
+            if (!empty($postIds)) {
+                $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
+                $uniquePostIds = array_unique($postIds);
+                $placeholders = implode(',', array_fill(0, count($uniquePostIds), '?'));
+
+                $wpPosts = DB::connection('wordpress')
+                    ->select("SELECT ID, post_title FROM {$wpTablePrefix}posts WHERE ID IN ($placeholders)", $uniquePostIds);
+
+                $wpTitlesMap = collect($wpPosts)->pluck('post_title', 'ID')->toArray();
+
+                foreach ($processedFailures as &$failure) {
+                    if ($failure['post_id'] && isset($wpTitlesMap[$failure['post_id']])) {
+                        $failure['title'] = $wpTitlesMap[$failure['post_id']];
+                    }
+                }
+            }
+
+            return $processedFailures;
+
+        } catch (Exception $e) {
+            Log::error('Failed to query or process failed dashboard jobs.', [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage()
+            ]);
             return [];
         }
     }

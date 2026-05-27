@@ -106,6 +106,55 @@
                     </table>
                 </div>
             </div>
+
+            <div class="mt-12">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Recent Ingestion Failures</h2>
+                    @if(count($failed_jobs) > 0)
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
+                            Action Required
+                        </span>
+                    @endif
+                </div>
+                
+                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WP ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Post</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason / Exception Context</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($failed_jobs as $job)
+                                <tr class="hover:bg-red-50/40 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                                        {{ $job['post_id'] ? '#' . $job['post_id'] : 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">
+                                        {{ $job['title'] }}
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-mono text-red-600 max-w-md break-words bg-red-50/30">
+                                        {{ $job['error'] }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ \Carbon\Carbon::parse($job['failed_at'])->diffForHumans() }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">
+                                        No ingestion failures found in the queue pipeline.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </main>
     </div>
 
