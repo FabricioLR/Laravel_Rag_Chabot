@@ -18,6 +18,7 @@ class DashboardController extends Controller
     {
         try {
             $metrics = $this->dashboardService->getSyncMetrics();
+            $latestPosts = $this->dashboardService->getLatestIndexedPosts();
         } catch (Throwable $e) {
             $metrics = [
                 'total_wordpress_posts' => 0,
@@ -27,6 +28,8 @@ class DashboardController extends Controller
                 'error'                 => $e->getMessage()
             ];
         }
+
+        $metrics['latest_posts'] = $latestPosts;
 
         return view('admin.dashboard', $metrics);
     }
