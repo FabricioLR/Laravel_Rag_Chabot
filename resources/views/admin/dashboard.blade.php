@@ -110,11 +110,6 @@
             <div class="mt-12">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold text-gray-900">Recent Ingestion Failures</h2>
-                    @if(count($failed_jobs) > 0)
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
-                            Action Required
-                        </span>
-                    @endif
                 </div>
                 
                 <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">

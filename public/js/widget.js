@@ -1,7 +1,20 @@
 (function () {
+    const initScript = document.getElementById('chatbot-initializer');
+
+    if (!initScript) {
+        console.error("Chatbot widget initialization failed: Missing '#chatbot-initializer' ID on script tag.");
+        return;
+    }
+
+    const laravelAppUrl = initScript.getAttribute('data-app-url');
+
+    const chatApiEndpoint = `${laravelAppUrl}/api/chat`;
+
+    console.log("Widget initialized successfully. Routing requests to:", chatApiEndpoint);
+
     const scriptTag = document.currentScript;
     const widgetToken = scriptTag.getAttribute('data-token');
-    const apiBaseUrl = "http://172.23.189.118:8000/api/chat";
+    const apiBaseUrl = chatApiEndpoint;
 
     let sessionId = sessionStorage.getItem('chat_widget_session') || null;
 
