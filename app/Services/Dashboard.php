@@ -101,44 +101,78 @@ class Dashboard
 
     public function getLatestFailedJobs(): array
     {
-        Log::info('Fetching latest failed ingestion jobs for admin dashboard.');
+        Log::info('DashboardMetrics: Starting execution of getLatestFailedJobs().');
 
         try {
             $failedJobs = DB::table('failed_jobs')
-                ->where('payload', 'like', '%App\\\\Jobs\\\\IngestPost%')
+                ->where('payload', 'like', '%IngestPost%')
                 ->orderBy('failed_at', 'DESC')
                 ->limit(5)
                 ->get();
 
+
             if ($failedJobs->isEmpty()) {
+                Log::warning('DashboardMetrics: No matching failed jobs found in failed_jobs table using modifier %IngestPost%.');
                 return [];
             }
 
             $processedFailures = [];
             $postIds = [];
 
-            foreach ($failedJobs as $job) {
+            foreach ($failedJobs as $index => $job) {
                 $payload = json_decode($job->payload, true);
+                
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    Log::error("DashboardMetrics: Failed to json_decode payload for job ID [{$job->id}].", [
+                        'json_error' => json_last_error_msg()
+                    ]);
+                    continue;
+                }
                 
                 $commandString = $payload['data']['command'] ?? '';
                 
+                if (empty($commandString)) {
+                    Log::warning("DashboardMetrics: 'data.command' block is missing or empty for job ID [{$job->id}].");
+                }
+
                 $postId = null;
+                
                 if (!empty($commandString)) {
-                    $unserializedJob = unserialize($commandString);
-                    if ($unserializedJob && isset($unserializedJob->postData['id'])) {
-                        $postId = $unserializedJob->postData['id'];
-                        $postIds[] = $postId;
+                    try {
+                        $unserializedJob = unserialize($commandString);
+                        if ($unserializedJob && isset($unserializedJob->postData['id'])) {
+                            $postId = $unserializedJob->postData['id'];
+                        }
+                    } catch (\Throwable $unserializeError) {
+                        Log::debug("DashboardMetrics: native unserialize() failed on job ID [{$job->id}]. Falling back to regex extraction.", [
+                            'error_message' => $unserializeError->getMessage()
+                        ]);
+                    }
+
+                    if (!$postId) {
+                        if (preg_match('/"id";i:(\d+)/', $commandString, $matches)) {
+                            $postId = (int)$matches[1];
+                        } else {
+                            Log::error("DashboardMetrics: Both unserialize and regex extraction failed to locate 'id' within the command string for job ID [{$job->id}].", [
+                                'raw_command_string' => $commandString
+                            ]);
+                        }
                     }
                 }
 
-                $shortException = Str::limit($job->exception, 150, '...');
+                if ($postId) {
+                    $postIds[] = $postId;
+                }
+
+                $shortException = Str::limit($job->exception ?? 'Unknown error context.', 150, '...');
+                $failedAt = $job->failed_at ?? now();
 
                 $processedFailures[] = [
                     'id' => $job->id,
                     'post_id' => $postId,
-                    'title' => 'Unknown Post Title',
+                    'title' => 'Unknown Post Title', 
                     'error' => $shortException,
-                    'failed_at' => $job->failed_at
+                    'failed_at' => $failedAt
                 ];
             }
 
@@ -150,6 +184,10 @@ class Dashboard
                 $wpPosts = DB::connection('wordpress')
                     ->select("SELECT ID, post_title FROM {$wpTablePrefix}posts WHERE ID IN ($placeholders)", $uniquePostIds);
 
+                Log::debug('DashboardMetrics: WordPress titles query returned records.', [
+                    'records_returned_count' => count($wpPosts)
+                ]);
+
                 $wpTitlesMap = collect($wpPosts)->pluck('post_title', 'ID')->toArray();
 
                 foreach ($processedFailures as &$failure) {
@@ -159,12 +197,17 @@ class Dashboard
                 }
             }
 
+            Log::info('DashboardMetrics: Execution completed successfully.', [
+                'final_failures_count' => count($processedFailures)
+            ]);
+
             return $processedFailures;
 
         } catch (Exception $e) {
-            Log::error('Failed to query or process failed dashboard jobs.', [
+            Log::error('DashboardMetrics: Catastrophic lifecycle failure inside getLatestFailedJobs().', [
                 'exception' => get_class($e),
-                'message'   => $e->getMessage()
+                'message'   => $e->getMessage(),
+                'trace'     => $e->getTraceAsString()
             ]);
             return [];
         }
