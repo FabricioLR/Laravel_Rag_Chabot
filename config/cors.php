@@ -1,5 +1,7 @@
 <?php
 
+
+
 return [
 
     /*
@@ -19,7 +21,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('CORS_ALLOWED_ORIGINS') ? explode(',', env('CORS_ALLOWED_ORIGINS')) : ['app.local']],
+    'allowed_origins' => [''],
 
     'allowed_origins_patterns' => [],
 

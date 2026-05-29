@@ -150,6 +150,120 @@
                 </div>
             </div>
 
+
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Register New Origin Domain</h2>
+                    <form action="{{ route('admin.domains.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Friendly Site Name</label>
+                            <input type="text" name="name" required placeholder="e.g. Acme Production Portal" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Origin URL</label>
+                            <input type="url" name="domain" required placeholder="https://example.com" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
+                        </div>
+                        <button type="submit" class="w-full text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded transition-colors shadow-sm">
+                            Authorize Access Origin
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+                        <h2 class="text-lg font-bold text-gray-900">Authorized Embedding Environments</h2>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Client</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Domain Link</th>
+                                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Snippet Actions</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revoke</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($domains as $dom)
+                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $dom->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{{ $dom->domain }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <button onclick="openSnippetModal('{{ $dom->name }}', '{{ $dom->domain }}', '{{ $dom->token }}')" class="inline-flex items-center text-xs bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-all border border-gray-200">
+                                            🛠️ Get Code Snippet
+                                        </button>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                        <form action="{{ route('admin.domains.delete', $dom->id) }}" method="POST" onsubmit="return confirm('Revoking this origin will instantly disconnect its running chatbot service. Continue?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">No external client origins registered yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="snippetModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+                <div class="bg-white max-w-2xl w-full rounded-xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <h3 id="modalTitle" class="text-base font-bold text-gray-900">Embedded Snippet Config</h3>
+                        <button onclick="closeSnippetModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-sm text-gray-600 mb-3">Instruct your client to paste this HTML/JS integration payload block inside their global web layout file right before closing the trailing <code class="font-mono bg-gray-100 text-xs p-0.5 rounded">&lt;/body&gt;</code> element block:</p>
+                        
+                        <div class="relative">
+                            <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-xs overflow-x-auto select-all leading-relaxed" id="codeBlock"></pre>
+                        </div>
+                    </div>
+                    <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex justify-end">
+                        <button onclick="closeSnippetModal()" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded transition-colors">
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            function openSnippetModal(name, domain, token) {
+                const modal = document.getElementById('snippetModal');
+                const title = document.getElementById('modalTitle');
+                const codeBlock = document.getElementById('codeBlock');
+                
+                // Construct the actual dynamic app host path
+                const appUrl = "{{ config('app.url') }}";
+
+                title.innerText = `Integration Script for ${name}`;
+                
+                // Generates the production snippet text securely mapped with its database token
+                codeBlock.innerText = `\n` +
+                                    `<script\n` +
+                                    `    id="chatbot-initializer"\n` +
+                                    `    src="${appUrl}/js/widget.js"\n` +
+                                    `    data-app-url="${appUrl}"\n` +
+                                    `    data-client-token="${token}">\n` +
+                                    `<\/script>`;
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeSnippetModal() {
+                const modal = document.getElementById('snippetModal');
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+            </script>
+
         </main>
     </div>
 

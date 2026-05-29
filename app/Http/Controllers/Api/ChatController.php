@@ -8,13 +8,15 @@ use App\Services\AnswerGeneration;
 use App\Services\PostCategories;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\DomainManager;
 use Exception;
 class ChatController extends Controller
 {
 
     public function __construct(
         protected AnswerGeneration $pipelineService,
-        protected PostCategories $categoryService
+        protected PostCategories $categoryService,
+        protected DomainManager $domainManager
     ) {}
 
 
@@ -29,6 +31,19 @@ class ChatController extends Controller
 
     public function chat(ChatRequest $request): JsonResponse
     {
+        $token = $request->header('X-Client-Token') ?? $request->input('token');
+        $origin = $request->header('Origin');
+
+        if (!$token || !$origin) {
+            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
+        }
+
+        $isAuthorized = $this->domainManager->verify($token, $origin);
+
+        if (!$isAuthorized) {
+            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
+        }
+
         $userInput = $request->input('chatInput');
         $sessionId = $request->input('sessionId');
 

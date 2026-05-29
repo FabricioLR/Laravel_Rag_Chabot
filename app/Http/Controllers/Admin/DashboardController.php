@@ -4,18 +4,24 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Dashboard;
-use Illuminate\Contracts\View\View;
+use App\Services\DomainManager;
+use App\Models\AllowedDomain;
 use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Throwable;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        protected Dashboard $dashboardService
+        protected Dashboard $dashboardService,
+        protected DomainManager $domainManager
     ) {}
 
     public function index(Request $request): View
     {
+        $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
+
         try {
             $metrics = $this->dashboardService->getSyncMetrics();
             $latestPosts = $this->dashboardService->getLatestIndexedPosts();
@@ -35,6 +41,36 @@ class DashboardController extends Controller
         }
 
 
-        return view('admin.dashboard', $metrics);
+        return view('admin.dashboard', array_merge($metrics, [
+            'domains' => $domains
+        ]));
+    }
+
+    public function storeDomain(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'domain' => 'required|url|unique:allowed_domains,domain'
+        ]);
+
+        try {
+            $this->domainManager->register(
+                $request->input('name'), 
+                $request->input('domain')
+            );
+            return redirect()->back()->with('success', 'Domain added successfully!');
+        } catch (Throwable $th) {
+            return redirect()->back()->withErrors(['domain' => $th->getMessage()]);
+        }
+    }
+
+    public function deleteDomain($id): RedirectResponse
+    {
+        try {
+            $this->domainManager->revoke((int)$id);
+            return redirect()->back()->with('success', 'Domain removed successfully!');
+        } catch (Throwable $th) {
+            return redirect()->back()->withErrors(['error' => $th->getMessage()]);
+        }
     }
 }

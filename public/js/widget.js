@@ -1,4 +1,5 @@
-(function () {
+(async function () {
+    // 1. Locate the master script tag pasted on the host site
     const initScript = document.getElementById('chatbot-initializer');
 
     if (!initScript) {
@@ -6,27 +7,24 @@
         return;
     }
 
+    // Extract configurations dynamically from the same initializer tag
     const laravelAppUrl = initScript.getAttribute('data-app-url');
-
+    const widgetToken = initScript.getAttribute('data-client-token'); 
     const chatApiEndpoint = `${laravelAppUrl}/api/chat`;
 
-    console.log("Widget initialized successfully. Routing requests to:", chatApiEndpoint);
+    console.log("Widget initialized successfully. Target Endpoint:", chatApiEndpoint);
 
-    const scriptTag = document.currentScript;
-    const widgetToken = scriptTag.getAttribute('data-token');
-    const apiBaseUrl = chatApiEndpoint;
-
-    let sessionId = sessionStorage.getItem('chat_widget_session') || null;
-
+    // Track state session tokens 
+    let sessionId = localStorage.getItem('chat_widget_session') || null;
     if (!sessionId){
         sessionId = crypto.randomUUID();
-        sessionStorage.setItem('chat_widget_session', sessionId);
+        localStorage.setItem('chat_widget_session', sessionId);
     }
 
     // 2. Inject CSS Styles directly into the host page
     const styles = `
         #chat-widget-container { position: fixed; bottom: 20px; right: 20px; z-index: 999999; font-family: Arial, sans-serif; }
-        #chat-widget-button { width: 60px; height: 60px; background: #2563eb; rounded-circle: 50%; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s; }
+        #chat-widget-button { width: 60px; height: 60px; background: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.2s; }
         #chat-widget-button:hover { transform: scale(1.05); }
         #chat-widget-window { display: none; width: 350px; height: 450px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; margin-bottom: 15px; }
         #chat-widget-header { background: #2563eb; color: #fff; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
@@ -57,7 +55,7 @@
             </div>
             <div id="chat-widget-input-area">
                 <input type="text" id="chat-widget-input" placeholder="Type a message..." autocomplete="off" />
-                <button id="chat-widget-send">Send</button>
+                <button type="button" id="chat-widget-send">Send</button> 
             </div>
         </div>
         <div id="chat-widget-button">
@@ -67,7 +65,6 @@
     document.body.appendChild(widgetContainer);
 
     // 4. UI Elements & Event Listeners
-    // 4. UI Elements & Event Listeners
     const widgetButton = document.getElementById('chat-widget-button');
     const widgetWindow = document.getElementById('chat-widget-window');
     const widgetClose = document.getElementById('chat-widget-close');
@@ -75,17 +72,15 @@
     const inputField = document.getElementById('chat-widget-input');
     const messagesContainer = document.getElementById('chat-widget-messages');
 
-    // When clicking the main floating chat icon button
     widgetButton.onclick = () => {
-        widgetWindow.style.display = 'flex';   // Open the chat window
-        widgetButton.style.display = 'none';   // Hide the floating chat icon
+        widgetWindow.style.display = 'flex';
+        widgetButton.style.display = 'none';
         inputField.focus();
     };
 
-    // When clicking the "✕" inside the chat header
     widgetClose.onclick = () => {
-        widgetWindow.style.display = 'none';   // Hide the chat window
-        widgetButton.style.display = 'flex';   // Show the floating chat icon back again
+        widgetWindow.style.display = 'none';
+        widgetButton.style.display = 'flex';
     };
 
     // 5. Send Message Logic
@@ -97,18 +92,28 @@
         inputField.value = '';
 
         try {
-            const response = await fetch(apiBaseUrl, {
+            fetch(chatApiEndpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Accept': 'application/json',
+                    'X-Client-Token': widgetToken // Pass the security token inside the request headers
+                },
                 body: JSON.stringify({
                     chatInput: text,
-                    //widget_token: widgetToken,
                     sessionId: sessionId
                 })
+            }).then(data => data.json()).then(response => {
+                if (response.status === 403 || response.status === 401) {
+                    appendMessage("Security Error: This domain environment connection is unauthorized.", 'bot');
+                    return;
+                }
+                
+                appendMessage(response.answer || "Desculpe, não consegui processar a resposta.", 'bot');
+            }).catch(error => {
+                console.error("Fetch error:", error);
+                appendMessage("Sorry, I'm having trouble connecting right now.", 'bot');
             });
-            const data = await response.json();
-        
-            appendMessage(data.answer, 'bot');
         } catch (error) {
             console.error("Chat error:", error);
             appendMessage("Sorry, I'm having trouble connecting right now.", 'bot');
@@ -123,6 +128,20 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    sendButton.onclick = sendMessage;
-    inputField.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+    sendButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Stops the event from bubbling up to any host page forms
+        sendMessage();
+        return false;
+    });
+
+    // Handle the Enter key press event safely
+    inputField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation(); // Prevents a host site form from capturing your Enter key
+            sendMessage();
+            return false;
+        }
+    });
 })();

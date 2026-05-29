@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator; 
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ChatRequest extends FormRequest
 {
@@ -26,5 +27,13 @@ class ChatRequest extends FormRequest
             'chatInput' => 'required|string',
             'sessionId' => 'required|string',
         ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        // Force Laravel to send back a clean 422 JSON response instead of a redirect
+        throw new HttpResponseException(response()->json([
+            'errors' => $validator->errors()
+        ], 422));
     }
 }
