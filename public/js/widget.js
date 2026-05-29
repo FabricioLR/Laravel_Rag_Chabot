@@ -75,7 +75,7 @@
     widgetButton.onclick = () => {
         widgetWindow.style.display = 'flex';
         widgetButton.style.display = 'none';
-        
+
         scrollToBottom();
 
         inputField.focus();
@@ -126,7 +126,13 @@
     function appendMessage(text, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('chat-msg', sender);
-        msgDiv.innerText = text;
+        
+        if (sender === 'bot') {
+            msgDiv.innerHTML = formatMarkdownLinks(text);
+        } else {
+            msgDiv.innerText = text; 
+        }
+
         messagesContainer.appendChild(msgDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -171,6 +177,19 @@
                 behavior: 'smooth' // Makes the transition look clean instead of snapping instantly
             });
         }, 50);
+    }
+
+    function formatMarkdownLinks(text) {
+        if (!text) return '';
+
+        // Regular expression to match [Link Text](http://example.com)
+        // It captures the text inside [] and the URL inside ()
+        const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+        return text.replace(markdownLinkRegex, function(match, linkText, url) {
+            // Returns a secure, styled HTML link that opens in a new tab
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 500;">${linkText}</a>`;
+        });
     }
 
     sendButton.addEventListener('click', function(e) {
