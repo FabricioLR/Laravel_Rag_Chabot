@@ -1,0 +1,570 @@
+{
+  "name": "RAG-Test",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\nconst lastIndexedPosts = $input.first().json.indexed_posts_ids\n\nconst randomItem = lastIndexedPosts[Math.floor(Math.random() * lastIndexedPosts.length)];\n\nreturn [{item: randomItem}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        208
+      ],
+      "id": "ba5d8aee-5545-465d-8321-c06867bd2977",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "base_posts",
+          "mode": "list",
+          "cachedResultName": "base_posts"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "ID",
+              "value": "={{ $json.item }}"
+            }
+          ]
+        },
+        "options": {
+          "outputColumns": [
+            "post_content"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        32,
+        208
+      ],
+      "id": "6a4c5bdb-3ef7-47e1-84e8-de597d112aa0",
+      "name": "Select rows from a table1",
+      "credentials": {
+        "mySql": {
+          "id": "3f0cGWcUTerzDETX",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  let content = item.json.post_content\n  content = content.replaceAll(\"\\n\", \"\")\n  item.json.post_content = content;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        208
+      ],
+      "id": "0db95c7c-2206-44ba-a130-939a7b7cc3ce",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.post_content }}",
+        "options": {
+          "useLinkReferenceDefinitions": false
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        416,
+        208
+      ],
+      "id": "27718985-9303-4992-8122-bad8b65f01b6",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        208
+      ],
+      "id": "df7b9ba1-f5ea-4ddc-9392-4c9a87f0587d",
+      "name": "HTTP Request2",
+      "credentials": {
+        "groqApi": {
+          "id": "xKQBkdnmusY1ECdB",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const context = $input.first().json.data\n\nconst system_prompt = `Você é um engenheiro de QA (Garantia de Qualidade) testando um chatbot RAG. \nSeu trabalho é ler o fragmento de documentação fornecido e gerar exatamente 3 perguntas de teste diversificadas.\n- Pergunta 1: Uma pergunta direta usando palavras-chave exatas extraídas do texto.\n- Pergunta 2: Uma pergunta conceitual usando sinônimos (sem usar as palavras-chave exatas).\n- Pergunta 3: Uma pergunta capciosa/complexa sobre um parâmetro do sistema ou uma regra específica.\n\nRetorne APENAS um array JSON bruto de strings (ex: [\"pergunta1\", \"pergunta2\", \"pergunta3\"]). Não escreva nenhum texto de introdução ou saudação.`\n\nconst prompt = \n`# [CONTEXTO RECUPERADO / DADOS DA SEARCH]\nAbaixo estão as informações extraídas da base de conhecimento que devem ser utilizadas para gerar as perguntas.\n\n${context}\n\n---\n\n# [RESPOSTA DO ASSISTENTE]\n`;\n\nconst payload = {\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    { \"role\": \"system\", \"content\": system_prompt },\n    { \"role\": \"user\", \"content\": prompt }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 1024\n}\n\nreturn [{payload}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        208
+      ],
+      "id": "6b9a395d-e1fb-4095-b261-9c41ee4f23ea",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "jsCode": "let questionsArray\nconst questions = []\ntry {\n  // 2. Parse the string into a real JavaScript array\n  questionsArray = JSON.parse($input.first().json.choices[0].message.content);\n  const session = Math.floor(Math.random() * 100000) + 1\n  for (let i = 0; i < questionsArray.length; i++){\n    questions.push({question: questionsArray[i], sesionId: session})\n  }\n\n} catch (error) {\n  return [{}]\n}\n\nreturn [...questions];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        208
+      ],
+      "id": "fd06dae0-db51-490d-94cc-3fb01f29b3fa",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1248,
+        208
+      ],
+      "id": "b8e83c49-b9ad-4475-9a97-866934cb9da2",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const system_prompt = `Você é um auditor de sistemas especialista em Engenharia de Prompt e avaliação de RAG (Geralmente conhecido como LLM-as-a-Judge). Seu objetivo é analisar se a resposta gerada por um chatbot está correta, fiel ao documento de origem e se seguiu as regras de formatação.\n\nAnalise as entradas com base estritamente nestes 3 critérios:\n1. Fidelidade (Faithfulness): O chatbot inventou, assumiu ou alucinou alguma informação que NÃO está escrita no documento de origem? (Sim/Não + Explicação).\n2. Precisão (Accuracy): O chatbot respondeu exatamente o que foi perguntado pelo usuário ou ele desviou do assunto? (Nota de 1 a 5).\n3. Verificação de Link (Link Check): O chatbot incluiu o link da URL da fonte no formato Markdown esperado [Texto](url)? (Correto/Incorreto).\n\nVocê deve retornar APENAS um objeto JSON estruturado, sem saudações ou textos complementares antes ou depois do código.`\n\nconst question = $input.first().json.question\nconst answer = $input.first().json.answer\nconst context = $('Markdown').first().json.data\n\nconst prompt = `# [DADOS PARA AVALIAÇÃO DE DESEMPENHO]\n\n---\n## 1. DOCUMENTO DE ORIGEM (VERDADE ABSOLUTA)\n${context}\n\n---\n## 2. PERGUNTA ENVIADA AO CHATBOT\n${question}\n\n---\n## 3. RESPOSTA GERADA PELO CHATBOT\n${answer}\n\n---\n# [INSTRUÇÃO DE SAÍDA]\nGere o relatório JSON contendo as chaves: \"fidelidade_alucinou\" (boolean), \"fidelidade_justificativa\" (string), \"precisao_nota\" (int), \"precisao_justificativa\" (string), \"link_citacao_correto\" (boolean).`;\n\nconst payload = {\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    { \"role\": \"system\", \"content\": system_prompt },\n    { \"role\": \"user\", \"content\": prompt }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 1024\n}\n\nreturn [{payload, context, question, answer}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1856,
+        -208
+      ],
+      "id": "232ffe57-3da7-4d5f-93ab-eddea31340b1",
+      "name": "Code in JavaScript8"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1456,
+        -208
+      ],
+      "id": "a2373186-a532-4ec6-b680-61af74a85ee2",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2064,
+        -208
+      ],
+      "id": "448f6601-a7a5-470e-a7b1-32f60831c0d4",
+      "name": "HTTP Request3",
+      "credentials": {
+        "groqApi": {
+          "id": "xKQBkdnmusY1ECdB",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let avaliations = [];\nfor (const item of $input.all()) {\n  let data = {}\n  try {\n    data.result = JSON.parse(item.json.choices[0].message.content);\n  } catch (error) {\n    \n  }\n\n  data.context = item.json.context;\n  data.question = item.json.question;\n  data.answer = item.json.answer;\n\n  avaliations.push(data)\n}\n\nreturn [{avaliations}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -496
+      ],
+      "id": "faa9b605-e858-411a-aad1-8f84d76d91ff",
+      "name": "Code in JavaScript9"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        208
+      ],
+      "id": "4caf11a7-6e1e-465a-99e3-07ec733a1c78",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.question = $('Code in JavaScript8').first().json.question;\n  item.json.answer = $('Code in JavaScript8').first().json.answer;\n  item.json.context = $('Code in JavaScript8').first().json.context;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        -208
+      ],
+      "id": "5c77c465-df23-48f5-9690-6f3b3702c649",
+      "name": "Code in JavaScript10"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1456,
+        208
+      ],
+      "id": "75f39349-7716-45ea-b59f-012e3393e978",
+      "name": "Wait2",
+      "webhookId": "d14f73c9-44be-43b9-9267-c4f511e6d5c7"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        -208
+      ],
+      "id": "d2515dc0-9db6-438f-a689-2b7b9d63c2ea",
+      "name": "Wait",
+      "webhookId": "ba622e5d-2da8-4f23-b2e5-7a8909cf968e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://172.17.0.1:8081/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Origin",
+              "value": "http://local.app"
+            },
+            {
+              "name": "X-Client-Token",
+              "value": "c8rzwdZ9iDwGhtfp9d5x9fdEbWukn4Ub"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chatInput",
+              "value": "={{ $json.question }}"
+            },
+            {
+              "name": "sessionId",
+              "value": "={{ $json.sesionId.toString() }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        208
+      ],
+      "id": "877b367e-d9f0-4930-b2cd-c2f3f5204c7e",
+      "name": "HTTP Request4",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://172.17.0.1:8081/api/ingestion/indexedPosts",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -368,
+        208
+      ],
+      "id": "ca823c4c-3b05-4eca-aa27-7fe9affc7f12",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript8": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript10": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8821b235-848c-4658-91c5-5d9adb369e19",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c8abba1b4da76f2dc302abf9ec5c58e458006e67e041dbfffa5055055a91fe55"
+  },
+  "id": "zr0r6I47MqN45HpI",
+  "tags": []
+}
