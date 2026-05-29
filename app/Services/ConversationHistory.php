@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 
 class ConversationHistory
 {
@@ -41,7 +42,7 @@ class ConversationHistory
         Log::debug('Raw conversation history dataset loaded.', [
             'session_id' => $sessionId,
             'records_found' => $history->count(),
-            'raw_payload' => $history->toArray() // Allows you to see all columns/messages in your storage logs
+            'raw_payload' => $history->toArray()
         ]);
 
         if ($history->isEmpty()) {
@@ -61,5 +62,30 @@ class ConversationHistory
         ]);
 
         return $formatted;
+    }
+
+    public function getMessagesForWidget(string $sessionId): Collection
+    {
+        $interactions = DB::table('conversation_histories')
+            ->where('session_id', $sessionId)
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->get();
+
+        $messages = collect();
+
+        foreach ($interactions as $interaction) {
+            $messages->push([
+                'text' => $interaction->question,
+                'sender' => 'user'
+            ]);
+
+            $messages->push([
+                'text' => $interaction->answer,
+                'sender' => 'bot'
+            ]);
+        }
+
+        return $messages;
     }
 }

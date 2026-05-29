@@ -75,6 +75,9 @@
     widgetButton.onclick = () => {
         widgetWindow.style.display = 'flex';
         widgetButton.style.display = 'none';
+        
+        scrollToBottom();
+
         inputField.focus();
     };
 
@@ -128,6 +131,48 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
+    async function loadHistory() {
+        const historyApiEndpoint = `${laravelAppUrl}/api/chat/history/${sessionId}`;
+        
+        try {
+            const response = await fetch(historyApiEndpoint, {
+                method: 'GET',
+                headers: { 
+                    'Accept': 'application/json',
+                    'X-Client-Token': widgetToken
+                }
+            });
+
+            if (!response.ok) return; // Silent return if unauthorized or error
+
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > 0) {
+                // Clear the default greeting if there is actual history
+                messagesContainer.innerHTML = '';
+                
+                // Loop and render past conversation logs
+                data.messages.forEach(msg => {
+                    appendMessage(msg.text, msg.sender); // assumes schema returns { text: '...', sender: 'user'/'bot' }
+                });
+
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error("Failed to recover message history context:", error);
+        }
+    }
+
+    function scrollToBottom() {
+        // Use setTimeout to ensure the browser has completely rendered any new HTML nodes first
+        setTimeout(() => {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth' // Makes the transition look clean instead of snapping instantly
+            });
+        }, 50);
+    }
+
     sendButton.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation(); // Stops the event from bubbling up to any host page forms
@@ -144,4 +189,6 @@
             return false;
         }
     });
+
+    loadHistory();
 })();

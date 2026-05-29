@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatRequest;
 use App\Services\AnswerGeneration;
 use App\Services\PostCategories;
+use App\Services\ConversationHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\DomainManager;
@@ -16,17 +17,50 @@ class ChatController extends Controller
     public function __construct(
         protected AnswerGeneration $pipelineService,
         protected PostCategories $categoryService,
-        protected DomainManager $domainManager
+        protected DomainManager $domainManager,
+        protected ConversationHistory $historyService
     ) {}
 
 
     public function categories(): JsonResponse
+    {   
+        try{
+            $categories = $this->categoryService->getActiveCategories();
+            
+            return response()->json([
+                'categories' => $categories
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function history(Request $request, string $sessionId): JsonResponse
     {
-        $categories = $this->categoryService->getActiveCategories();
-        
-        return response()->json([
-            'categories' => $categories
-        ], 200);
+        $token = $request->header('X-Client-Token') ?? $request->input('token');
+        $origin = $request->header('Origin');
+
+        if (!$token || !$origin) {
+            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
+        }
+
+        $isAuthorized = $this->domainManager->verify($token, $origin);
+
+        if (!$isAuthorized) {
+            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
+        }
+
+        try {
+            $messages = $this->historyService->getMessagesForWidget($sessionId);
+
+            return response()->json([
+                'messages' => $messages
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function chat(ChatRequest $request): JsonResponse
