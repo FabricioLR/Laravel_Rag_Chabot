@@ -22,10 +22,18 @@ class ChatController extends Controller
     ) {}
 
 
-    public function categories(): JsonResponse
+    public function categories(Request $request): JsonResponse
     {   
+        $parent = $request->query('parent', 0);
+
+        if (!is_numeric($parent)) {
+            return response()->json([
+                'error' => "Invalid parameter. 'parent' must be a number."
+            ], 500);
+        }
+
         try{
-            $categories = $this->categoryService->getActiveCategories();
+            $categories = $this->categoryService->getActiveCategories($parent);
             
             return response()->json([
                 'categories' => $categories

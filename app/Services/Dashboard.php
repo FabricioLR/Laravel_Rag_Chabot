@@ -68,7 +68,7 @@ class Dashboard
                 FROM vectors 
                 WHERE metadata->>'source' = 'wordpress'
                 ORDER BY metadata->>'source_post_id', created_at DESC
-                LIMIT 10
+                LIMIT 3
             ");
 
             if (empty($recentVectors)) {
