@@ -178,7 +178,7 @@ class Dashboard
 
             if (!empty($postIds)) {
                 $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
-                $uniquePostIds = array_unique($postIds);
+                $uniquePostIds = array_values(array_unique($postIds));
                 $placeholders = implode(',', array_fill(0, count($uniquePostIds), '?'));
 
                 $wpPosts = DB::connection('wordpress')
