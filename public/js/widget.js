@@ -10,7 +10,7 @@
     const widgetToken = initScript.getAttribute('data-client-token'); 
     const chatApiEndpoint = `${laravelAppUrl}/api/chat`;
 
-    const initialMessage = "Which main category are you interested in?";
+    const initialMessage = "Qual categoria principal você tem interesse?";
 
     console.log("Widget initialized successfully. Target Endpoint:", chatApiEndpoint);
 
@@ -68,7 +68,7 @@
         .dot:nth-child(2) { animation-delay: -1.1s; }
         .dot:nth-child(3) { animation-delay: -0.9s; }
         @keyframes wave {0%, 60%, 100% { transform: translateY(0); }30% { transform: translateY(-6px); }}
-`;
+    `;
 
     const styleSheet = document.createElement("style");
     styleSheet.innerText = styles;
@@ -76,18 +76,19 @@
 
     const widgetContainer = document.createElement('div');
     widgetContainer.id = 'chat-widget-container';
+    
     widgetContainer.innerHTML = `
         <div id="chat-widget-window">
             <div id="chat-widget-header">
-                <span>AI Assistant</span>
-                <button type="button" id="chat-widget-reset" class="chat-reset-btn" style="display: none;">🔄 Change Category</button>
+                <span>Assistente Virtual</span>
+                <button type="button" id="chat-widget-reset" class="chat-reset-btn" style="display: none;">🔄 Alterar Categoria</button>
                 <span id="chat-widget-close" style="cursor:pointer;">✕</span>
             </div>
             <div id="chat-widget-messages" style="display: flex; flex-direction: column;">
             </div>
             <div id="chat-widget-input-area">
-                <input type="text" id="chat-widget-input" placeholder="Type a message..." autocomplete="off" />
-                <button type="button" id="chat-widget-send">Send</button> 
+                <input type="text" id="chat-widget-input" placeholder="Digite uma mensagem..." autocomplete="off" />
+                <button type="button" id="chat-widget-send">Enviar</button> 
             </div>
         </div>
         <div id="chat-widget-button">
@@ -129,11 +130,10 @@
         const activeOptions = messagesContainer.querySelectorAll('.chat-options-container');
         activeOptions.forEach(el => el.remove());
 
-        //messagesContainer.innerHTML = '<div class="chat-msg bot">Hello! How can I help you today?</div>';
-
         inputField.disabled = true;
         sendButton.disabled = true;
-        inputField.placeholder = "Please select an option above...";
+        
+        inputField.placeholder = "Por favor, selecione uma opção acima...";
 
         await runStateEngine("START_FLOW");
     };
@@ -190,13 +190,14 @@
 
         inputField.disabled = false;
         sendButton.disabled = false;
-        inputField.placeholder = "Type a message...";
+        
+        inputField.placeholder = "Digite uma mensagem...";
 
         if (currentStep !== 'completed') {
             inputField.disabled = true;
             sendButton.disabled = true;
-            inputField.placeholder = "Please select an option above...";
-        } else {
+            
+            inputField.placeholder = "Por favor, selecione uma opção acima...";
         }
 
         if (text === 'START_FLOW'){
@@ -210,12 +211,12 @@
                 updateState('awaiting_main');
                 
                 const botMsg = initialMessage;
-                appendMessage(botMsg, 'bot', [{name: 'General'}, ...data.categories]);
+                appendMessage(botMsg, 'bot', [{name: 'Geral'}, ...data.categories]);
                 
                 saveOnboardingToLocalHistory(botMsg, 'bot');
             } catch (err) {
                 console.error(err);
-                appendMessage("Sorry, I had trouble retrieving categories.", 'bot');
+                appendMessage("Desculpe, tive problemas para carregar as categorias.", 'bot');
             }
             return;
         }
@@ -230,12 +231,12 @@
                 updateState('awaiting_main');
                 
                 const botMsg = initialMessage;
-                appendMessage(botMsg, 'bot', [{name: 'General'}, ...data.categories]);
+                appendMessage(botMsg, 'bot', [{name: 'Geral'}, ...data.categories]);
                 
                 saveOnboardingToLocalHistory(botMsg, 'bot');
             } catch (err) {
                 console.error(err);
-                appendMessage("Sorry, I had trouble retrieving categories.", 'bot');
+                appendMessage("Desculpe, tive problemas para carregar as categorias.", 'bot');
             }
             return;
         }
@@ -243,15 +244,15 @@
         if (currentStep === 'awaiting_main') {
             saveOnboardingToLocalHistory(text, 'user');
 
-            if (text === 'General') {
-                updateState('completed', { main: 'General', child: 'General' });
-                const botMsg = "You selected General. What would you like to know?";
+            if (text === 'Geral' || text === 'General') {
+                updateState('completed', { main: 'Geral', child: 'Geral' });
+                const botMsg = "Você selecionou Geral. O que você gostaria de saber?";
                 appendMessage(botMsg, 'bot');
                 
                 saveOnboardingToLocalHistory(botMsg, 'bot');
                 inputField.disabled = false;
                 sendButton.disabled = false;
-                inputField.placeholder = "Type a message...";
+                inputField.placeholder = "Digite uma mensagem...";
                 return;
             }
 
@@ -259,7 +260,7 @@
             const prefix = match ? match[1] : null;
 
             if (!prefix) {
-                appendMessage("Please use the buttons provided to pick a valid category.", 'bot');
+                appendMessage("Por favor, use os botões fornecidos para escolher uma categoria válida.", 'bot');
                 return;
             }
 
@@ -270,14 +271,14 @@
                 const data = await res.json();
 
                 updateState('awaiting_child', { main: text, child: null });
-                
-                const botMsg = `Got it! Select a specific subcategory under '${text}':`;
-                appendMessage(botMsg, 'bot', [{name: 'General'}, ...data.categories]);
+
+                const botMsg = `Entendido! Selecione uma subcategoria específica em '${text}':`;
+                appendMessage(botMsg, 'bot', [{name: 'Geral'}, ...data.categories]);
                 
                 saveOnboardingToLocalHistory(botMsg, 'bot');
             } catch (err) {
                 console.error(err);
-                appendMessage("Sorry, I had trouble loading the subcategories.", 'bot');
+                appendMessage("Desculpe, tive problemas para carregar as subcategories.", 'bot');
             }
             return;
         }
@@ -289,16 +290,16 @@
             
             inputField.disabled = false;
             sendButton.disabled = false;
-            inputField.placeholder = "Type a message...";
+            inputField.placeholder = "Digite uma mensagem...";
 
-            const botMsg = `Perfect! Filters set to focus on your choice. How can I help you today?`;
+            const botMsg = `Perfeito! Filtros aplicados para focar na sua escolha. Como posso te ajudar hoje?`;
             appendMessage(botMsg, 'bot');
             
             saveOnboardingToLocalHistory(botMsg, 'bot');
 
             inputField.disabled = false;
             sendButton.disabled = false;
-            inputField.placeholder = "Type a message...";
+            inputField.placeholder = "Digite uma mensagem...";
 
             return;
         }
@@ -331,7 +332,7 @@
                 const data = await response.json();
 
                 if (response.status === 403 || response.status === 401) {
-                    appendMessage("Security Error: Connection is unauthorized.", 'bot');
+                    appendMessage("Erro de Segurança: Esta conexão não está autorizada.", 'bot');
                     return;
                 }
 
@@ -340,7 +341,7 @@
                 loadingDiv.remove();
 
                 console.error(error);
-                appendMessage("Sorry, I'm having trouble connecting right now.", 'bot');
+                appendMessage("Desculpe, estou com problemas para me conectar no momento.", 'bot');
             }
         }
     }
@@ -397,7 +398,7 @@
                 if (currentStep !== 'completed') {
                     inputField.disabled = true;
                     sendButton.disabled = true;
-                    inputField.placeholder = "Please select an option above...";
+                    inputField.placeholder = "Por favor, selecione uma opção acima...";
 
                     runStateEngine("START_FLOW");
                 }

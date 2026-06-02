@@ -43,7 +43,6 @@ class ChatRequest extends FormRequest
 
     protected function failedValidation(Validator $validator)
     {
-        // Force Laravel to send back a clean 422 JSON response instead of a redirect
         throw new HttpResponseException(response()->json([
             'errors' => $validator->errors()
         ], 422));
