@@ -57,18 +57,65 @@ class Dashboard
         }
     }
 
+    public function getLatestUnindexedPosts(): array
+    {
+        Log::info('Fetching latest published posts that have not been indexed yet.');
+
+        try {
+            $indexedResult = DB::connection('pgvector')->select("
+                SELECT DISTINCT (metadata->>'source_post_id') as post_id
+                FROM vectors 
+                WHERE metadata->>'source' = 'wordpress'
+            ");
+
+            $indexedPostIds = collect($indexedResult)->pluck('post_id')->filter()->toArray();
+
+            $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
+            
+            $query = "
+                SELECT ID, post_title, post_date 
+                FROM {$wpTablePrefix}posts 
+                WHERE post_status = 'publish' 
+                AND post_type IN ('post', 'page') 
+                AND post_content != ''
+            ";
+
+            if (!empty($indexedPostIds)) {
+                $placeholders = implode(',', array_fill(0, count($indexedPostIds), '?'));
+                $query .= " AND ID NOT IN ($placeholders)";
+            }
+
+            $query .= " ORDER BY post_date DESC LIMIT 5";
+
+            $unindexedPosts = DB::connection('wordpress')->select($query, $indexedPostIds);
+
+            return $unindexedPosts;
+
+        } catch (Exception $e) {
+            Log::error('Failed to fetch latest unindexed posts.', [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage()
+            ]);
+            
+            return [];
+        }
+    }
+
     public function getLatestIndexedPosts(): array
     {
         Log::info('Fetching latest indexed posts for admin dashboard.');
 
         try {
             $recentVectors = DB::connection('pgvector')->select("
-                SELECT DISTINCT ON (metadata->>'source_post_id') 
-                    metadata->>'source_post_id' as post_id, created_at
-                FROM vectors 
-                WHERE metadata->>'source' = 'wordpress'
-                ORDER BY metadata->>'source_post_id', created_at DESC
-                LIMIT 3
+                SELECT * FROM (
+                    SELECT DISTINCT ON (metadata->>'source_post_id') 
+                        metadata->>'source_post_id' AS post_id, 
+                        created_at 
+                    FROM vectors 
+                    ORDER BY metadata->>'source_post_id', created_at DESC
+                ) subquery
+                ORDER BY created_at DESC 
+                LIMIT 5;
             ");
 
             if (empty($recentVectors)) {

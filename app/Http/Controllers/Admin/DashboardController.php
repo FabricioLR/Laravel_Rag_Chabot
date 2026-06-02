@@ -25,8 +25,11 @@ class DashboardController extends Controller
         try {
             $metrics = $this->dashboardService->getSyncMetrics();
             $latestPosts = $this->dashboardService->getLatestIndexedPosts();
+            $unindexedPosts = $this->dashboardService->getLatestUnindexedPosts();
             $failedJobs = $this->dashboardService->getLatestFailedJobs();
+            
             $metrics['latest_posts'] = $latestPosts;
+            $metrics['unindexed_posts'] = $unindexedPosts;
             $metrics['failed_jobs'] = $failedJobs;
         } catch (Throwable $e) {
             $metrics = [
@@ -35,11 +38,11 @@ class DashboardController extends Controller
                 'posts_remaining'       => 0,
                 'sync_progress_percent' => 0.00,
                 'latest_posts'          => [],
+                'unindexed_posts'       => [],
                 'failed_jobs'           => [],
                 'error'                 => $e->getMessage()
             ];
         }
-
 
         return view('admin.dashboard', array_merge($metrics, [
             'domains' => $domains
