@@ -63,7 +63,12 @@
         .chat-options-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; margin-bottom: 10px; align-self: flex-start; max-width: 90%; }
         .chat-option-btn { background: #fff; color: #2563eb; border: 1px solid #2563eb; padding: 6px 12px; border-radius: 16px; font-size: 13px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
         .chat-option-btn:hover { background: #2563eb; color: #fff; }
-    `;
+        .chat-msg.loading { background: #e2e8f0; align-self: flex-start; padding: 12px 16px;}
+        .dot {width: 6px; height: 6px; background: #64748b; border-radius: 50%;display: inline-block; animation: wave 1.3s infinite ease-in-out;}
+        .dot:nth-child(2) { animation-delay: -1.1s; }
+        .dot:nth-child(3) { animation-delay: -0.9s; }
+        @keyframes wave {0%, 60%, 100% { transform: translateY(0); }30% { transform: translateY(-6px); }}
+`;
 
     const styleSheet = document.createElement("style");
     styleSheet.innerText = styles;
@@ -183,14 +188,15 @@
         const inputField = document.getElementById('chat-widget-input');
         const sendButton = document.getElementById('chat-widget-send');
 
+        inputField.disabled = false;
+        sendButton.disabled = false;
+        inputField.placeholder = "Type a message...";
+
         if (currentStep !== 'completed') {
             inputField.disabled = true;
             sendButton.disabled = true;
             inputField.placeholder = "Please select an option above...";
         } else {
-            inputField.disabled = false;
-            sendButton.disabled = false;
-            inputField.placeholder = "Type a message...";
         }
 
         if (text === 'START_FLOW'){
@@ -243,6 +249,9 @@
                 appendMessage(botMsg, 'bot');
                 
                 saveOnboardingToLocalHistory(botMsg, 'bot');
+                inputField.disabled = false;
+                sendButton.disabled = false;
+                inputField.placeholder = "Type a message...";
                 return;
             }
 
@@ -286,10 +295,21 @@
             appendMessage(botMsg, 'bot');
             
             saveOnboardingToLocalHistory(botMsg, 'bot');
+
+            inputField.disabled = false;
+            sendButton.disabled = false;
+            inputField.placeholder = "Type a message...";
+
             return;
         }
 
         if (currentStep === 'completed') {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.classList.add('chat-msg', 'loading');
+            loadingDiv.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+            messagesContainer.appendChild(loadingDiv);
+            scrollToBottom();
+
             try {
                 const response = await fetch(chatApiEndpoint, {
                     method: 'POST',
@@ -301,10 +321,12 @@
                     body: JSON.stringify({
                         chatInput: text,
                         sessionId: sessionId,
-                        selectedMainCategory: activeFilters.main,
-                        selectedChildCategory: activeFilters.child
+                        mainCategory: activeFilters.main,
+                        childCategory: activeFilters.child
                     })
                 });
+
+                loadingDiv.remove();
 
                 const data = await response.json();
 
@@ -315,6 +337,8 @@
 
                 appendMessage(data.answer || "Desculpe, não consegui processar.", 'bot');
             } catch (error) {
+                loadingDiv.remove();
+
                 console.error(error);
                 appendMessage("Sorry, I'm having trouble connecting right now.", 'bot');
             }
@@ -374,6 +398,8 @@
                     inputField.disabled = true;
                     sendButton.disabled = true;
                     inputField.placeholder = "Please select an option above...";
+
+                    runStateEngine("START_FLOW");
                 }
             } else {
                 runStateEngine("START_FLOW");
