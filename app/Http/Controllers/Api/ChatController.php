@@ -88,10 +88,20 @@ class ChatController extends Controller
 
         $userInput = $request->input('chatInput');
         $sessionId = $request->input('sessionId');
+        $mainCategory = $request->input('mainCategory');
+        $childCategory = $request->input('childCategory');
+
+        if ($mainCategory && in_array(strtolower($mainCategory), ['general', 'geral'])) {
+            $mainCategory = null;
+        }
+
+        if ($childCategory && in_array(strtolower($childCategory), ['general', 'geral'])) {
+            $childCategory = null;
+        }
 
         try {
-            $answer = $this->pipelineService->generate($userInput, $sessionId);
-            
+            $answer = $this->pipelineService->generate($userInput, $sessionId, $mainCategory, $childCategory);
+            //$answer = "testando...";
             return response()->json([
                 'answer' => $answer, 
                 'question' => $userInput

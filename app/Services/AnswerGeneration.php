@@ -14,16 +14,21 @@ class AnswerGeneration
         protected ConversationHistory $historyService
     ) {}
 
-    public function generate(string $userInput, string $sessionId): string
+    public function generate(string $userInput, string $sessionId, ?string $mainCategory = null, ?string $childCategory = null): string
     {
-        Log::info('Chatbot pipeline started.', ['user_input' => $userInput, 'session_id' => $sessionId]);
+        Log::info('Chatbot pipeline started.', [
+            'user_input'     => $userInput, 
+            'session_id'     => $sessionId,
+            'main_category'  => $mainCategory,
+            'child_category' => $childCategory
+        ]);
         $totalStartTime = microtime(true);
 
         $conversationHistory = $this->historyService->getFormattedHistory($sessionId);
 
         $embeddingResult = $this->embeddingService->generate($userInput);
 
-        $searchResult = $this->knowledgeBaseService->searchContext($userInput, $embeddingResult['vector']);
+        $searchResult = $this->knowledgeBaseService->searchContext($userInput, $embeddingResult['vector'], $mainCategory, $childCategory);
 
         $llmResult = $this->llmService->generateAnswer($userInput, $sessionId, $searchResult['context'], $conversationHistory);
 

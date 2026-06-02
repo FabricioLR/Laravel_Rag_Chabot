@@ -26,6 +26,18 @@ class ChatRequest extends FormRequest
         return [
             'chatInput' => 'required|string',
             'sessionId' => 'required|string',
+            'mainCategory'  => [
+                'nullable',
+                'string',
+                'regex:/^(general|geral|\d+(\.\d+)*\s*-\s*.+)$/i'
+            ],
+            
+            'childCategory' => [
+                'required_with:mainCategory',
+                'nullable',
+                'string',
+                'regex:/^(general|geral|\d+(\.\d+)*\s*-\s*.+)$/i'
+            ],
         ];
     }
 
