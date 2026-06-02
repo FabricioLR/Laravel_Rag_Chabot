@@ -75,8 +75,12 @@ class Dashboard
                 return [];
             }
 
-            $postIds = array_map(fn($item) => $item->post_id, $recentVectors);
+            $vectorMap = [];
+            foreach ($recentVectors as $vector) {
+                $vectorMap[$vector->post_id] = $vector->created_at;
+            }
 
+            $postIds = array_keys($vectorMap);
             $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
             
             $placeholders = implode(',', array_fill(0, count($postIds), '?'));
@@ -85,10 +89,14 @@ class Dashboard
                 SELECT ID, post_title, post_date 
                 FROM {$wpTablePrefix}posts 
                 WHERE ID IN ($placeholders)
-                ORDER BY FIELD(ID, $placeholders) -- Keeps the pgvector order
-            ", array_merge($postIds, $postIds));
+            ", $postIds);
 
-            return $wpPosts;
+            foreach ($wpPosts as $post) {
+                $post->indexed_at = $vectorMap[$post->ID] ?? null;
+            }
+
+            return collect($wpPosts)->sortByDesc('indexed_at')->values()->all();
+
         } catch (Exception $e) {
             Log::error('Failed to fetch latest indexed posts.', [
                 'exception' => get_class($e),
@@ -107,12 +115,11 @@ class Dashboard
             $failedJobs = DB::table('failed_jobs')
                 ->where('payload', 'like', '%IngestPost%')
                 ->orderBy('failed_at', 'DESC')
-                ->limit(5)
+                ->limit(3)
                 ->get();
 
 
             if ($failedJobs->isEmpty()) {
-                Log::warning('DashboardMetrics: No matching failed jobs found in failed_jobs table using modifier %IngestPost%.');
                 return [];
             }
 
@@ -123,17 +130,10 @@ class Dashboard
                 $payload = json_decode($job->payload, true);
                 
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    Log::error("DashboardMetrics: Failed to json_decode payload for job ID [{$job->id}].", [
-                        'json_error' => json_last_error_msg()
-                    ]);
                     continue;
                 }
                 
                 $commandString = $payload['data']['command'] ?? '';
-                
-                if (empty($commandString)) {
-                    Log::warning("DashboardMetrics: 'data.command' block is missing or empty for job ID [{$job->id}].");
-                }
 
                 $postId = null;
                 
@@ -152,10 +152,6 @@ class Dashboard
                     if (!$postId) {
                         if (preg_match('/"id";i:(\d+)/', $commandString, $matches)) {
                             $postId = (int)$matches[1];
-                        } else {
-                            Log::error("DashboardMetrics: Both unserialize and regex extraction failed to locate 'id' within the command string for job ID [{$job->id}].", [
-                                'raw_command_string' => $commandString
-                            ]);
                         }
                     }
                 }
@@ -183,10 +179,6 @@ class Dashboard
 
                 $wpPosts = DB::connection('wordpress')
                     ->select("SELECT ID, post_title FROM {$wpTablePrefix}posts WHERE ID IN ($placeholders)", $uniquePostIds);
-
-                Log::debug('DashboardMetrics: WordPress titles query returned records.', [
-                    'records_returned_count' => count($wpPosts)
-                ]);
 
                 $wpTitlesMap = collect($wpPosts)->pluck('post_title', 'ID')->toArray();
 
