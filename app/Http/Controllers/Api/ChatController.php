@@ -50,6 +50,10 @@ class ChatController extends Controller
         $token = $request->header('X-Client-Token') ?? $request->input('token');
         $origin = $request->header('Origin');
 
+        if (!$origin){
+            $origin = $request->header('Referer');
+        }
+
         if (!$token || !$origin) {
             return response()->json(['error' => 'Missing authorization credentials context.'], 401);
         }
@@ -75,6 +79,10 @@ class ChatController extends Controller
     {
         $token = $request->header('X-Client-Token') ?? $request->input('token');
         $origin = $request->header('Origin');
+        
+        if (!$origin){
+            $origin = $request->header('Referer');
+        }
 
         if (!$token || !$origin) {
             return response()->json(['error' => 'Missing authorization credentials context.'], 401);

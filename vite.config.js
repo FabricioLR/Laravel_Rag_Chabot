@@ -1,21 +1,42 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import { bunny } from 'laravel-vite-plugin/fonts';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/js/widget-entry.jsx'],
             refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
         }),
+        react(),
         tailwindcss(),
     ],
+    build: {
+        outDir: 'public/build',
+        emptyOutDir: false,
+        cssCodeSplit: false,
+        
+        lib: {
+            entry: resolve(__dirname, 'resources/js/widget-entry.jsx'),
+            name: 'ChatWidget',
+            formats: ['iife'],
+            fileName: () => 'widget.js',
+        },
+        rollupOptions: {
+            external: [],
+            output: {
+                globals: {},
+                assetFileNames: (assetInfo) => {
+                    if (assetInfo.name && (assetInfo.name.endsWith('.css') || assetInfo.name === 'style.css')) {
+                        return 'widget.css';
+                    }
+                    return assetInfo.name;
+                },
+            },
+        },
+    },
     server: {
         host: '0.0.0.0',
         port: 5173,

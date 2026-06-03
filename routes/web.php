@@ -4,6 +4,12 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
+if (App::environment('local')) {
+    Route::get('/', function () {
+        return view('local');
+    })->name('local');
+}
+
 Route::middleware('guest')->prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('admin.login.submit');
