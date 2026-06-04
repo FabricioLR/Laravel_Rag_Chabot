@@ -146,7 +146,7 @@
                             @empty
                                 <tr>
                                     <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
-                                        🎉 All published content is fully synchronized and up to date!
+                                        All published content is fully synchronized and up to date!
                                     </td>
                                 </tr>
                             @endforelse

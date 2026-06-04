@@ -5,6 +5,9 @@ import { resolve } from 'path';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+    define: {
+        'process.env.NODE_ENV': JSON.stringify('production'),
+    },
     plugins: [
         laravel({
             input: ['resources/js/widget-entry.jsx'],

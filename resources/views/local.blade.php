@@ -6,10 +6,10 @@
 
     <script
         id="chatbot-initializer"
-        data-app-url="http://localhost:8000"
-        data-client-token="C3Ijkt3ZPzO7AW3LuydOwx9fWNL6cCJk">
+        data-app-url="{{ env('APP_URL') }}"
+        data-client-token="{{ env('LOCAL_WIDGET_TOKEN') }}">
     </script>
-
+    
     @viteReactRefresh
     @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
 </head>
