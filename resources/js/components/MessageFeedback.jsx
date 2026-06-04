@@ -36,11 +36,11 @@ export default function MessageFeedback({ appUrl, clientToken, conversationId })
   }
 
   return (
-    <div className="twbot-flex twbot-justify-end twbot-gap-2 twbot-mt-1.5 twbot-pt-1 twbot-border-t twbot-border-slate-300/50">
+    <div className="flex justify-end gap-2 mt-1.5 pt-1 border-t border-slate-300/50">
       <button 
         onClick={() => sendFeedback('positive')} 
         disabled={isSending}
-        className={`twbot-text-xs twbot-transition-opacity ${isSending ? 'twbot-opacity-30 twbot-cursor-not-allowed' : 'twbot-cursor-pointer twbot-opacity-60 hover:twbot-opacity-100'}`} 
+        className={`text-xs transition-opacity ${isSending ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer opacity-100 hover:opacity-100'}`} 
         title="Útil"
       >
         👍
@@ -48,7 +48,7 @@ export default function MessageFeedback({ appUrl, clientToken, conversationId })
       <button 
         onClick={() => sendFeedback('negative')} 
         disabled={isSending}
-        className={`twbot-text-xs twbot-transition-opacity ${isSending ? 'twbot-opacity-30 twbot-cursor-not-allowed' : 'twbot-cursor-pointer twbot-opacity-60 hover:twbot-opacity-100'}`} 
+        className={`text-xs transition-opacity ${isSending ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer opacity-100 hover:opacity-100'}`} 
         title="Não foi útil"
       >
         👎
