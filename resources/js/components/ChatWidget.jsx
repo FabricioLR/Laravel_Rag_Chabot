@@ -216,7 +216,7 @@ export default function ChatWidget({ appUrl, clientToken }) {
     setMessages([]);
     setActiveOptions([]);
     setIsDisabled(true);
-    inputPlaceholder("Selecione uma opção acima...");
+    setInputPlaceholder("Selecione uma opção acima...");
     syncAndInitialize();
   };
 

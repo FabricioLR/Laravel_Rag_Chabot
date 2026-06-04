@@ -49,23 +49,6 @@ class ChatController extends Controller
 
     public function history(Request $request, string $sessionId): JsonResponse
     {
-        $token = $request->header('X-Client-Token') ?? $request->input('token');
-        $origin = $request->header('Origin');
-
-        if (!$origin){
-            $origin = $request->header('Referer');
-        }
-
-        if (!$token || !$origin) {
-            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
-        }
-
-        $isAuthorized = $this->domainManager->verify($token, $origin);
-
-        if (!$isAuthorized) {
-            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
-        }
-
         try {
             $messages = $this->historyService->getMessagesForWidget($sessionId);
 
@@ -79,23 +62,6 @@ class ChatController extends Controller
 
     public function chat(ChatRequest $request): JsonResponse
     {
-        $token = $request->header('X-Client-Token') ?? $request->input('token');
-        $origin = $request->header('Origin');
-        
-        if (!$origin){
-            $origin = $request->header('Referer');
-        }
-
-        if (!$token || !$origin) {
-            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
-        }
-
-        $isAuthorized = $this->domainManager->verify($token, $origin);
-
-        if (!$isAuthorized) {
-            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
-        }
-
         $userInput = $request->input('chatInput');
         $sessionId = $request->input('sessionId');
         $mainCategory = $request->input('mainCategory');
@@ -126,19 +92,6 @@ class ChatController extends Controller
 
     public function feedback(FeedbackRequest $request): JsonResponse
     {
-        $token = $request->header('X-Client-Token') ?? $request->input('token');
-        $origin = $request->header('Origin') ?? $request->header('Referer');
-
-        if (!$token || !$origin) {
-            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
-        }
-
-        $isAuthorized = $this->domainManager->verify($token, $origin);
-
-        if (!$isAuthorized) {
-            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
-        }
-
         $conversationId = $request->input('conversationId');
         $feedbackValue = $request->input('rating');
 

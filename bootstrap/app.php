@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/chat',
         ]);
+        $middleware->alias([
+            'widget.auth' => \App\Http\Middleware\VerifyWidgetCredentials::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
