@@ -11,9 +11,9 @@ class ConversationHistory
     /**
      * Store the new interaction.
      */
-    public function store(string $sessionId, string $question, string $answer): void
+    public function store(string $sessionId, string $question, string $answer): int
     {
-        DB::table('conversation_histories')->insert([
+        return DB::table('conversation_histories')->insertGetId([
             'session_id' => $sessionId,
             'question' => $question,
             'answer' => $answer,
@@ -38,15 +38,8 @@ class ConversationHistory
             ->limit(3)
             ->get()
             ->reverse();
-    
-        Log::debug('Raw conversation history dataset loaded.', [
-            'session_id' => $sessionId,
-            'records_found' => $history->count(),
-            'raw_payload' => $history->toArray()
-        ]);
 
         if ($history->isEmpty()) {
-            Log::info('No prior interactions found for this session profile.', ['session_id' => $sessionId]);
             return "Nenhuma conversa anterior.\n";
         }
 
@@ -68,7 +61,7 @@ class ConversationHistory
     {
         $interactions = DB::table('conversation_histories')
             ->where('session_id', $sessionId)
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->limit(5)
             ->get();
 
@@ -76,16 +69,30 @@ class ConversationHistory
 
         foreach ($interactions as $interaction) {
             $messages->push([
+                'id' => $interaction->id,
+                'feedback' => $interaction->feedback,
                 'text' => $interaction->question,
                 'sender' => 'user'
             ]);
 
             $messages->push([
+                'id' => $interaction->id,
+                'feedback' => $interaction->feedback,
                 'text' => $interaction->answer,
                 'sender' => 'bot'
             ]);
         }
 
         return $messages;
+    }
+
+    public function updateFeedback(int $conversationId, string $feedbackValue): bool
+    {
+        return DB::table('conversation_histories')
+            ->where('id', $conversationId)
+            ->update([
+                'feedback' => $feedbackValue,
+                'updated_at' => now(),
+            ]) > 0;
     }
 }

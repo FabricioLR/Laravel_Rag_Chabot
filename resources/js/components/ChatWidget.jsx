@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import MessageFeedback from './MessageFeedback';
+
+const SESSION_EXPIRATION_MS = 10 * 60 * 1000; 
 
 export default function ChatWidget({ appUrl, clientToken }) {
   const chatApiEndpoint = `${appUrl}/api/chat`;
@@ -11,19 +14,44 @@ export default function ChatWidget({ appUrl, clientToken }) {
   const [activeFilters, setActiveFilters] = useState({ main: null, child: null });
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [inputPlaceholder, setInputPlaceholder] = useState("Por favor, selecione uma opção acima...");
+  const [inputPlaceholder, setInputPlaceholder] = useState("Selecione uma opção acima...");
   const [isDisabled, setIsDisabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [activeOptions, setActiveOptions] = useState([]);
 
   const messagesEndRef = useRef(null);
 
+  const clearChatSessionData = () => {
+    localStorage.removeItem('chat_widget_session');
+    localStorage.removeItem('chat_widget_session_timestamp');
+    localStorage.removeItem('chat_widget_state');
+    localStorage.removeItem('chat_widget_filters');
+    localStorage.removeItem('chat_widget_local_history');
+  };
+
   useEffect(() => {
     let currentSessionId = localStorage.getItem('chat_widget_session');
-    
+    const sessionTimestamp = localStorage.getItem('chat_widget_session_timestamp');
+    const now = Date.now();
+
+    if (currentSessionId && sessionTimestamp) {
+      const timeElapsed = now - parseInt(sessionTimestamp, 10);
+      
+      if (timeElapsed > SESSION_EXPIRATION_MS) {
+        clearChatSessionData();
+        currentSessionId = null; 
+      }
+    } else if (currentSessionId && !sessionTimestamp) {
+      clearChatSessionData();
+      currentSessionId = null;
+    }
+
     if (!currentSessionId) {
       currentSessionId = crypto.randomUUID();
       localStorage.setItem('chat_widget_session', currentSessionId);
+      localStorage.setItem('chat_widget_session_timestamp', now.toString());
+    } else {
+      localStorage.setItem('chat_widget_session_timestamp', now.toString());
     }
 
     setSessionId(currentSessionId);
@@ -52,6 +80,7 @@ export default function ChatWidget({ appUrl, clientToken }) {
       setActiveFilters(filters);
       localStorage.setItem('chat_widget_filters', JSON.stringify(filters));
     }
+    localStorage.setItem('chat_widget_session_timestamp', Date.now().toString());
   };
 
   const syncAndInitialize = async () => {
@@ -73,6 +102,8 @@ export default function ChatWidget({ appUrl, clientToken }) {
     }
 
     const formattedHistory = historicalMessages.map(msg => ({
+      id: msg.id,
+      feedback: msg.feedback,
       text: msg.text,
       sender: msg.sender,
       isApi: msg.sender === 'bot'
@@ -99,6 +130,8 @@ export default function ChatWidget({ appUrl, clientToken }) {
   };
 
   const runStateEngine = async (text) => {
+    localStorage.setItem('chat_widget_session_timestamp', Date.now().toString());
+
     if (currentStep === 'awaiting_main') {
       setActiveOptions([]);
 
@@ -159,7 +192,7 @@ export default function ChatWidget({ appUrl, clientToken }) {
 
         setIsLoading(false);
         const data = await response.json();
-        setMessages(prev => [...prev, { text: data.answer || "Desculpe, não consegui processar.", sender: 'bot', isApi: true }]);
+        setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer || "Desculpe, não consegui processar.", sender: 'bot', isApi: true }]);
       } catch (error) {
         setIsLoading(false);
         setMessages(prev => [...prev, { text: "Desculpe, estou com problemas para me conectar no momento.", sender: 'bot', isApi: false }]);
@@ -178,11 +211,12 @@ export default function ChatWidget({ appUrl, clientToken }) {
   };
 
   const handleReset = () => {
+    localStorage.setItem('chat_widget_session_timestamp', Date.now().toString());
     updateState('start', { main: null, child: null });
     setMessages([]);
     setActiveOptions([]);
     setIsDisabled(true);
-    setInputPlaceholder("Por favor, selecione uma opção acima...");
+    inputPlaceholder("Selecione uma opção acima...");
     syncAndInitialize();
   };
 
@@ -220,8 +254,23 @@ export default function ChatWidget({ appUrl, clientToken }) {
 
           <div className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3">
             {messages.map((msg, index) => (
-              <div key={index} className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${msg.sender === 'user' ? 'bg-blue-600 text-white self-end ml-auto' : 'bg-slate-200 text-slate-800 self-start'}`}>
+              <div 
+                key={index} 
+                className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${
+                  msg.sender === 'user' 
+                    ? 'bg-blue-600 text-white self-end ml-auto' 
+                    : 'bg-slate-200 text-slate-800 self-start'
+                }`}
+              >
                 <div>{msg.sender === 'bot' ? formatMarkdownLinks(msg.text) : msg.text}</div>
+                
+                {msg.sender === 'bot' && msg.isApi && msg.feedback === null && (
+                  <MessageFeedback 
+                    appUrl={appUrl}
+                    clientToken={clientToken}
+                    conversationId={msg.id}
+                  />
+                )}
               </div>
             ))}
 

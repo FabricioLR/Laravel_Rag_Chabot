@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatRequest;
+use App\Http\Requests\FeedbackRequest;
 use App\Services\AnswerGeneration;
 use App\Services\PostCategories;
 use App\Services\ConversationHistory;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\DomainManager;
 use Exception;
+
 class ChatController extends Controller
 {
 
@@ -108,15 +110,60 @@ class ChatController extends Controller
         }
 
         try {
-            $answer = $this->pipelineService->generate($userInput, $sessionId, $mainCategory, $childCategory);
+            $result = $this->pipelineService->generate($userInput, $sessionId, $mainCategory, $childCategory);
             //$answer = "testando...";
             return response()->json([
-                'answer' => $answer, 
+                'conversationId' => $result['conversationId'],
+                'answer' => $result['answer'],
                 'question' => $userInput
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function feedback(FeedbackRequest $request): JsonResponse
+    {
+        $token = $request->header('X-Client-Token') ?? $request->input('token');
+        $origin = $request->header('Origin') ?? $request->header('Referer');
+
+        if (!$token || !$origin) {
+            return response()->json(['error' => 'Missing authorization credentials context.'], 401);
+        }
+
+        $isAuthorized = $this->domainManager->verify($token, $origin);
+
+        if (!$isAuthorized) {
+            return response()->json(['error' => 'Unauthorized embed code environment connection.'], 403);
+        }
+
+        $conversationId = $request->input('conversationId');
+        $feedbackValue = $request->input('rating');
+
+        if (!$conversationId || !$feedbackValue) {
+            return response()->json(['error' => 'Missing required body parameters (conversationId, rating).'], 422);
+        }
+
+        try {
+            $updated = $this->historyService->updateFeedback($conversationId, $feedbackValue);
+
+            if (!$updated) {
+                return response()->json([
+                    'error' => 'No matching conversation record found to update feedback for this session.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Feedback successfully recorded.'
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while saving your feedback.',
+                'details' => $e->getMessage()
             ], 500);
         }
     }

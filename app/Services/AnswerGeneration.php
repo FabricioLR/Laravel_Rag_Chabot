@@ -14,7 +14,7 @@ class AnswerGeneration
         protected ConversationHistory $historyService
     ) {}
 
-    public function generate(string $userInput, string $sessionId, ?string $mainCategory = null, ?string $childCategory = null): string
+    public function generate(string $userInput, string $sessionId, ?string $mainCategory = null, ?string $childCategory = null): array
     {
         Log::info('Chatbot pipeline started.', [
             'user_input'     => $userInput, 
@@ -32,7 +32,7 @@ class AnswerGeneration
 
         $llmResult = $this->llmService->generateAnswer($userInput, $sessionId, $searchResult['context'], $conversationHistory);
 
-        $this->historyService->store($sessionId, $userInput, $llmResult['answer']);
+        $conversationId = $this->historyService->store($sessionId, $userInput, $llmResult['answer']);
 
         $totalDuration = round((microtime(true) - $totalStartTime) * 1000, 2);
 
@@ -58,6 +58,6 @@ class AnswerGeneration
             ]
         ]);
 
-        return $llmResult['answer'];
+        return ['answer' => $llmResult['answer'], 'conversationId' => $conversationId];
     }
 }
