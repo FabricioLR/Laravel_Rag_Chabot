@@ -236,6 +236,38 @@ export default function ChatWidget({ appUrl, clientToken }) {
     return parts.length > 0 ? parts : text;
   };
 
+  function formatBotResponse(rawText) {
+    if (!rawText) return '';
+
+    let formatted = rawText;
+
+    // 1. Decode Unicode sequences (e.g., \u00ea -> ê)
+    // Most modern fetch/axios setups decode this automatically, but this handles raw strings safely
+    try {
+        formatted = JSON.parse(`"${formatted.replace(/"/g, '\\"')}"`);
+    } catch (e) {
+        // Fallback placeholder if string escaping encounters structural issues
+    }
+
+    // 2. Convert standard Markdown links: [Text](URL) -> <a href="URL">Text</a>
+    // Cleans up the escaped slashes (\/) typically sent back by PHP/Laravel json_encode
+    formatted = formatted.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(match, text, url) {
+        const cleanUrl = url.replace(/\\/g, ''); // Remove JSON escape backslashes
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">${text}</a>`;
+    });
+
+    // 3. Convert explicit angled bracket links: <URL> -> <a href="URL">URL</a>
+    formatted = formatted.replace(/<(https?:\/\/[^>]+)>/g, function(match, url) {
+        const cleanUrl = url.replace(/\\/g, '');
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">${cleanUrl}</a>`;
+    });
+
+    // 4. Convert structural newlines (\n) into functional HTML break tags
+    formatted = formatted.replace(/\n/g, '<br>');
+
+    return formatted;
+  }
+
   return (
     <div className="fixed bottom-5 right-5 z-[999999] font-sans">
       {isOpen && (
@@ -258,11 +290,18 @@ export default function ChatWidget({ appUrl, clientToken }) {
                 key={index} 
                 className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${
                   msg.sender === 'user' 
-                    ? 'bg-blue-600 text-white self-end ml-auto' 
+                    ? 'bg-slate-200 text-slate-800 self-end ml-auto' 
                     : 'bg-slate-200 text-slate-800 self-start'
                 }`}
               >
-                <div>{msg.sender === 'bot' ? formatMarkdownLinks(msg.text) : msg.text}</div>
+
+                <div className={`max-w-xs md:max-w-md p-3 rounded-lg overflow-hidden break-words whitespace-pre-wrap ${msg.sender === 'bot' ? 'bg-gray-100' : 'bg-gray-100 text-slate-800'}`}>
+                  {msg.sender === 'bot' ? (
+                      <span dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
+                  ) : (
+                      msg.text
+                  )}
+                </div>
                 
                 {msg.sender === 'bot' && msg.isApi && msg.feedback === null && (
                   <MessageFeedback 
