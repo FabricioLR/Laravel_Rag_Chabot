@@ -109,11 +109,11 @@ class Knowledge
             $sourceUrl = $metadata['source_post_url'] ?? 'N/A';
             $sourceTitle = $metadata['source_post_title'] ?? 'N/A';
             
-            $context .= "<context_" . ($index + 1) . ">\n";
+            $context .= "<" . $sourceTitle . ">\n";
             $context .= "[URL do Post]: " . $sourceUrl . "\n";
             $context .= "[Título do Post]: " . $sourceTitle . "\n";
             $context .= "[Texto do Post]: " . $item->text . "\n";
-            $context .= "</context_" . ($index + 1) . ">\n\n";
+            $context .= "</" . $sourceTitle . ">\n\n";
         }
         return $context;
     }

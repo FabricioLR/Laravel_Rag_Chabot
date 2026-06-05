@@ -25,7 +25,7 @@ class LLM
               "Abaixo está o histórico das últimas interações para lhe dar contexto do que foi discutido:\n\n" .
               $conversationHistory . "\n" .
               "---\n\n" .
-              "# [CONTEXTO RECUPERADO / DADOS DA SEARCH]\n" .
+              "# [CONTEXTO RECUPERADO]\n" .
               $context . "\n" .
               "---\n\n" .
               "# [PERGUNTA ATUAL DO USUÁRIO]\n" .
