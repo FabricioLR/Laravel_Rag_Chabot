@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-if (App::environment('local')) {
+if (config('admin.widget.enabled', env('ENABLE_LOCAL_WIDGET')) == true) {
     Route::get('/', function () {
         return view('local');
     })->name('local');

@@ -120,6 +120,7 @@ return [
             'database' => env('WP_DB_DATABASE', 'wordpress'),
             'username' => env('WP_DB_USERNAME', 'wordpress'),
             'password' => env('WP_DB_PASSWORD', 'wordpress'),
+            'prefix' => env('WP_DB_TABLE_PREFIX', 'wp_'),
             'charset' => env('WP_DB_CHARSET', 'utf8mb4'),
             'collation' => env('WP_DB_COLLATION', 'utf8mb4_unicode_ci'),
         ],
