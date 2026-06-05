@@ -47,7 +47,6 @@
             @endif
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Total WordPress Posts</p>
                     <p class="text-4xl font-bold text-gray-900 mt-2">{{ number_format($total_wordpress_posts) }}</p>
@@ -62,12 +61,10 @@
                     <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Unindexed Posts Remaining</p>
                     <p class="text-4xl font-bold text-amber-500 mt-2">{{ number_format($posts_remaining) }}</p>
                 </div>
-
             </div>
 
             <div class="mt-12">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Recently Indexed Posts</h2>
-                
                 <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -82,29 +79,17 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($latest_posts as $post)
                                 <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                        #{{ $post->ID }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">
-                                        {{ $post->post_title }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($post->post_date)->format('M d, Y H:i') }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $post->indexed_at ? \Carbon\Carbon::parse($post->indexed_at)->format('M d, Y H:i') : 'Not indexed' }}
-                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">#{{ $post->ID }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">{{ $post->post_title }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($post->post_date)->format('M d, Y H:i') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $post->indexed_at ? \Carbon\Carbon::parse($post->indexed_at)->format('M d, Y H:i') : 'Not indexed' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Indexed
-                                        </span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Indexed</span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
-                                        No recently indexed posts found.
-                                    </td>
+                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">No recently indexed posts found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -114,7 +99,6 @@
 
             <div class="mt-12">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Latest Published Posts Awaiting Indexing</h2>
-                
                 <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -128,26 +112,16 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($unindexed_posts as $post)
                                 <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                        #{{ $post->ID }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">
-                                        {{ $post->post_title }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($post->post_date)->format('M d, Y H:i') }}
-                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">#{{ $post->ID }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">{{ $post->post_title }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($post->post_date)->format('M d, Y H:i') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                            Pending Sync
-                                        </span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending Sync</span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
-                                        All published content is fully synchronized and up to date!
-                                    </td>
+                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">All published content is fully synchronized and up to date!</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -156,10 +130,7 @@
             </div>
 
             <div class="mt-12">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-900">Recent Ingestion Failures</h2>
-                </div>
-                
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Ingestion Failures</h2>
                 <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -173,24 +144,14 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($failed_jobs as $job)
                                 <tr class="hover:bg-red-50/40 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                        {{ $job['post_id'] ? '#' . $job['post_id'] : 'N/A' }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">
-                                        {{ $job['title'] }}
-                                    </td>
-                                    <td class="px-6 py-4 text-xs font-mono text-red-600 max-w-md break-words bg-red-50/30">
-                                        {{ $job['error'] }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ \Carbon\Carbon::parse($job['failed_at'])->diffForHumans() }}
-                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{{ $job['post_id'] ? '#' . $job['post_id'] : 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">{{ $job['title'] }}</td>
+                                    <td class="px-6 py-4 text-xs font-mono text-red-600 max-w-md break-words bg-red-50/30">{{ $job['error'] }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($job['failed_at'])->diffForHumans() }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">
-                                        No ingestion failures found in the queue pipeline.
-                                    </td>
+                                    <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">No ingestion failures found in the queue pipeline.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -198,8 +159,84 @@
                 </div>
             </div>
 
+            <div class="mt-12">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">User Sentiment Feedback Logs</h2>
+                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session Reference</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Question</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bot Message Answer Output</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">User Evaluation</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Logged At</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse($feedbacks as $feedback)
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500 max-w-[140px]">
+                                            <div class="flex items-center gap-2 group">
+                                                <span id="session-text-{{ $feedback->id }}" class="truncate cursor-pointer hover:text-indigo-600" title="Click to copy: {{ $feedback->session_id }}" onclick="copySessionId('{{ $feedback->session_id }}', this)">
+                                                    {{ $feedback->session_id }}
+                                                </span>
+                                                
+                                                <button type="button" 
+                                                        onclick="copySessionId('{{ $feedback->session_id }}', this)" 
+                                                        class="text-gray-400 hover:text-indigo-600 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Copy Session ID">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        
+                                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs break-words" title="{{ $feedback->question }}">
+                                            {{ Str::limit($feedback->question, 90, '...') }}
+                                        </td>
+                                        
+                                        <td class="px-6 py-4 text-sm text-gray-600 max-w-sm break-words" title="{{ $feedback->answer }}">
+                                            {{ Str::limit($feedback->answer, 120, '...') }}
+                                        </td>
+                                        
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            @if(in_array(strtolower($feedback->feedback), ['positive', 'thumbs_up', 'upvote', 'up', '1']))
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                                                    Helpful
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                    Unhelpful
+                                                </span>
+                                            @endif
+                                        </td>
+                                        
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                                            {{ $feedback->created_at ? \Carbon\Carbon::parse($feedback->created_at)->diffForHumans() : 'N/A' }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400">
+                                            No widget rating submissions received yet.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    @if($feedbacks->hasPages())
+                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                            {{ $feedbacks->links() }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">
                     <h2 class="text-lg font-bold text-gray-900 mb-4">Register New Origin Domain</h2>
                     <form action="{{ route('admin.domains.store') }}" method="POST">
@@ -238,7 +275,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{{ $dom->domain }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <button onclick="openSnippetModal('{{ $dom->name }}', '{{ $dom->domain }}', '{{ $dom->token }}')" class="inline-flex items-center text-xs bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-all border border-gray-200">
-                                            🛠️ Get Code Snippet
+                                            Code Snippet
                                         </button>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -267,7 +304,6 @@
                     </div>
                     <div class="p-6">
                         <p class="text-sm text-gray-600 mb-3">Instruct your client to paste this HTML/JS integration payload block inside their global web layout file right before closing the trailing <code class="font-mono bg-gray-100 text-xs p-0.5 rounded">&lt;/body&gt;</code> element block:</p>
-                        
                         <div class="relative">
                             <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-xs overflow-x-auto select-all leading-relaxed" id="codeBlock"></pre>
                         </div>
@@ -291,10 +327,10 @@
                 title.innerText = `Integration Script for ${name}`;
                 
                 codeBlock.innerText = `\n` +
-                                    `<link rel="stylesheet" href="${appUrl}/build/widget.css">\n` +    
+                                    `<link rel="stylesheet" href="${appUrl}/js/widget.css">\n` +    
                                     `<script\n` +
                                     `    id="chatbot-initializer"\n` +
-                                    `    src="${appUrl}/build/widget.js"\n` +
+                                    `    src="${appUrl}/js/widget.js"\n` +
                                     `    data-app-url="${appUrl}"\n` +
                                     `    data-client-token="${token}">\n` +
                                     `<\/script>`;
@@ -307,6 +343,43 @@
                 const modal = document.getElementById('snippetModal');
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
+            }
+
+            function copySessionId(text, element) {
+                if (!navigator.clipboard) {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showFeedback(element);
+                    } catch (err) {
+                        console.error('Fallback: Oops, unable to copy', err);
+                    }
+                    document.body.removeChild(textArea);
+                    return;
+                }
+
+                navigator.clipboard.writeText(text).then(function() {
+                    showFeedback(element);
+                }, function(err) {
+                    console.error('Async: Could not copy text: ', err);
+                });
+            }
+
+            function showFeedback(element) {
+                const container = element.closest('.flex');
+                const textNode = container.querySelector('span');
+                const originalTitle = textNode.innerText;
+
+                textNode.innerText = 'Copied!';
+                textNode.classList.add('text-green-600', 'font-semibold');
+                
+                setTimeout(() => {
+                    textNode.innerText = originalTitle;
+                    textNode.classList.remove('text-green-600', 'font-semibold');
+                }, 1000);
             }
             </script>
 

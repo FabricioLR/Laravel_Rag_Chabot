@@ -20,23 +20,19 @@ class DashboardController extends Controller
 
     public function index(Request $request): View
     {
-        $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
-
         try {
             $metrics = $this->dashboardService->getSyncMetrics();
-            $latestPosts = $this->dashboardService->getLatestIndexedPosts();
-            $unindexedPosts = $this->dashboardService->getLatestUnindexedPosts();
-            $failedJobs = $this->dashboardService->getLatestFailedJobs();
-            
-            $metrics['latest_posts'] = $latestPosts;
-            $metrics['unindexed_posts'] = $unindexedPosts;
-            $metrics['failed_jobs'] = $failedJobs;
+            $metrics['latest_posts'] = $this->dashboardService->getLatestIndexedPosts();
+            $metrics['unindexed_posts'] = $this->dashboardService->getLatestUnindexedPosts();
+            $metrics['failed_jobs'] = $this->dashboardService->getLatestFailedJobs();
+
+            $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
+            $feedbacks = $this->dashboardService->getPaginatedFeedback(10);
         } catch (Throwable $e) {
             $metrics = [
                 'total_wordpress_posts' => 0,
                 'indexed_posts_count'   => 0,
                 'posts_remaining'       => 0,
-                'sync_progress_percent' => 0.00,
                 'latest_posts'          => [],
                 'unindexed_posts'       => [],
                 'failed_jobs'           => [],
@@ -45,7 +41,8 @@ class DashboardController extends Controller
         }
 
         return view('admin.dashboard', array_merge($metrics, [
-            'domains' => $domains
+            'domains' => $domains,
+            'feedbacks' => $feedbacks
         ]));
     }
 

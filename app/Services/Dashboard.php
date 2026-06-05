@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Exception;
 
 class Dashboard
@@ -250,5 +251,17 @@ class Dashboard
             ]);
             return [];
         }
+    }
+
+    public function getPaginatedFeedback(int $perPage = 10): LengthAwarePaginator
+    {
+        Log::info('Fetching paginated user feedback logs for admin dashboard.');
+
+        return DB::table('conversation_histories')
+            ->whereNotNull('feedback')
+            ->where('feedback', '!=', '')
+            ->select('id', 'session_id', 'question', 'answer', 'feedback', 'created_at')
+            ->orderBy('created_at', 'DESC')
+            ->paginate($perPage);
     }
 }

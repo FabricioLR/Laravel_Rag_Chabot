@@ -11,8 +11,11 @@
     </script>
     
     @if(class_exists(\Illuminate\Support\Facades\Vite::class) && \Illuminate\Support\Facades\Vite::isRunningHot())
+    dev
+        @viteReactRefresh
         @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
     @else
+    prod
         <link rel="stylesheet" href="{{ asset('build/widget.css') }}">
         <script src="{{ asset('build/widget.js') }}" defer></script>
     @endif
