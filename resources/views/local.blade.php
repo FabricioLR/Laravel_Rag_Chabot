@@ -10,8 +10,12 @@
         data-client-token="{{ env('LOCAL_WIDGET_TOKEN') }}">
     </script>
     
-    @viteReactRefresh
-    @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
+    @if(class_exists(\Illuminate\Support\Facades\Vite::class) && \Illuminate\Support\Facades\Vite::isRunningHot())
+        @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
+    @else
+        <link rel="stylesheet" href="{{ asset('build/widget.css') }}">
+        <script src="{{ asset('build/widget.js') }}" defer></script>
+    @endif
 </head>
 <body>
     <h1>Minha Aplicação Laravel</h1>
