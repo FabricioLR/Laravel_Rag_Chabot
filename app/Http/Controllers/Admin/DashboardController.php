@@ -27,7 +27,7 @@ class DashboardController extends Controller
             $metrics['failed_jobs'] = $this->dashboardService->getLatestFailedJobs();
 
             $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
-            $feedbacks = $this->dashboardService->getPaginatedFeedback(10);
+            $feedbacks = $this->dashboardService->getPaginatedFeedback(5);
         } catch (Throwable $e) {
             $metrics = [
                 'total_wordpress_posts' => 0,

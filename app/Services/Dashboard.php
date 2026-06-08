@@ -253,7 +253,7 @@ class Dashboard
         }
     }
 
-    public function getPaginatedFeedback(int $perPage = 10): LengthAwarePaginator
+    public function getPaginatedFeedback(int $perPage = 5): LengthAwarePaginator
     {
         Log::info('Fetching paginated user feedback logs for admin dashboard.');
 

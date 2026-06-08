@@ -178,6 +178,7 @@ export default function ChatWidget({ appUrl, clientToken }) {
 
     if (currentStep === 'completed') {
       setIsLoading(true);
+      setIsDisabled(true);
       try {
         const response = await fetch(chatApiEndpoint, {
           method: 'POST',
@@ -191,10 +192,12 @@ export default function ChatWidget({ appUrl, clientToken }) {
         });
 
         setIsLoading(false);
+        setIsDisabled(false);
         const data = await response.json();
         setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer || "Desculpe, não consegui processar.", sender: 'bot', isApi: true }]);
       } catch (error) {
         setIsLoading(false);
+        setIsDisabled(false);
         setMessages(prev => [...prev, { text: "Desculpe, estou com problemas para me conectar no momento.", sender: 'bot', isApi: false }]);
       }
     }
