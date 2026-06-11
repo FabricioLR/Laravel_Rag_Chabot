@@ -6,7 +6,7 @@ use App\Models\AllowedDomain;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Cache;
 class CorsServiceProvider extends ServiceProvider
 {
     /**
@@ -22,14 +22,20 @@ class CorsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (!Schema::hasTable('allowed_domains')) {
+        $tableExists = Cache::remember('cors_table_exists', now()->addDays(1), function () {
+            return Schema::hasTable('allowed_domains');
+        });
+
+        if (!$tableExists) {
             return;
         }
 
         try {
-            $databaseOrigins = AllowedDomain::where('is_active', true)
-                ->pluck('domain')
-                ->toArray();
+            $databaseOrigins = Cache::remember('cors_allowed_origins', now()->addMinutes(30), function () {
+                return AllowedDomain::where('is_active', true)
+                    ->pluck('domain')
+                    ->toArray();
+            });
 
             if (!empty($databaseOrigins)) {
                 $defaultOrigins = config('cors.allowed_origins', []);
@@ -38,8 +44,10 @@ class CorsServiceProvider extends ServiceProvider
 
                 config(['cors.allowed_origins' => $mergedOrigins]);
                 
-                Log::debug('CorsServiceProvider: Dynamic database origins successfully injected into runtime runtime config.', [
-                    'total_origins' => count($mergedOrigins)
+                Log::debug('CorsServiceProvider: Dynamic database origins successfully injected into runtime config.', [
+                    'total_origins' => count($mergedOrigins),
+                    'origins' => $mergedOrigins,
+                    'from_cache' => true
                 ]);
             }
         } catch (\Throwable $e) {
