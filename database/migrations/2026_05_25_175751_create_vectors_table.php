@@ -13,7 +13,7 @@ return new class extends Migration
     {
         DB::connection("pgvector")->statement('CREATE EXTENSION IF NOT EXISTS vector;');
 
-        if (!Schema::hasTable('vectors')) {
+        if (!Schema::connection('pgvector')->hasTable('vectors')) {
             Schema::connection('pgvector')->create('vectors', function (Blueprint $table) {
                 $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
                 $table->text('text');

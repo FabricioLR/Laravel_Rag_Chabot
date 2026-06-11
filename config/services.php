@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'llm' => [
+        'provider' => env('LLM_PROVIDER', 'groq'),
+    ],
+
     'huggingface' => [
         'key' => env('HUGGINGFACE_API_KEY'),
     ],

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\LLM;
 
+use App\Contracts\LLM;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Exception;
 
-class LLM
+class Groq implements LLM
 {
     public function generateAnswer(string $userInput, string $sessionId, string $context, string $conversationHistory): array
     {
@@ -51,20 +51,17 @@ class LLM
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
 
-        if ($response->failed()) {
-            Log::error('Failed to get LLM response from Groq API.', [
-                'duration_ms' => $duration,
-                'status' => $response->status(),
-                'response' => $response->body()
-            ]);
-            throw new Exception('Failed to generate AI response.');
-        }
+        if ($response->failed()) { throw new Exception('Groq API Error'); }
 
-        $answer = $response->json()['choices'][0]['message']['content'] ?? 'Desculpe, ocorreu um erro.';
-
+        $data = $response->json();
         return [
-            'answer' => $answer,
-            'duration' => $duration
+            'answer' => $data['choices'][0]['message']['content'] ?? '',
+            'duration' => $duration,
+            'total_tokens' => $data['usage']['total_tokens'] ?? 0,
+            'tokens' => [
+                'prompt' => $data['usage']['prompt_tokens'] ?? 0,
+                'completion' => $data['usage']['completion_tokens'] ?? 0,
+            ]
         ];
     }
 }

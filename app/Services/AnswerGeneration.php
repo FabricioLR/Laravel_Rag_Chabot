@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
+use App\Services\LLM\LLMManager;
 use Exception;
 
 class AnswerGeneration
@@ -10,7 +11,6 @@ class AnswerGeneration
     public function __construct(
         protected Embedding $embeddingService,
         protected Knowledge $knowledgeBaseService,
-        protected LLM $llmService,
         protected ConversationHistory $historyService
     ) {}
 
@@ -24,13 +24,15 @@ class AnswerGeneration
         ]);
         $totalStartTime = microtime(true);
 
+        $llm = LLMManager::make();
+
         $conversationHistory = $this->historyService->getFormattedHistory($sessionId);
 
         $embeddingResult = $this->embeddingService->generate($userInput);
 
         $searchResult = $this->knowledgeBaseService->searchContext($userInput, $embeddingResult['vector'], $mainCategory, $childCategory);
 
-        $llmResult = $this->llmService->generateAnswer($userInput, $sessionId, $searchResult['context'], $conversationHistory);
+        $llmResult = $llm->generateAnswer($userInput, $sessionId, $searchResult['context'], $conversationHistory);
 
         $conversationId = $this->historyService->store($sessionId, $userInput, $llmResult['answer']);
 
@@ -42,7 +44,8 @@ class AnswerGeneration
         $totalPayloadLength = $userInputLength + $contextLength + $historyLength;
         
         Log::info('Chatbot pipeline fully completed.', [
-            'user_input' => $userInput,
+            'question' => $userInput,
+            'answer' => $llmResult['answer'],
             'session_id' => $sessionId,
             'total_duration_ms' => $totalDuration,
             'breakdown_ms' => [
@@ -50,12 +53,13 @@ class AnswerGeneration
                 'database' => $searchResult['duration'],
                 'llm' => $llmResult['duration']
             ],
+            'total_payload_chars' => $totalPayloadLength,
             'llm_input_string_lengths' => [
                 'user_query_chars'        => $userInputLength,
                 'retrieved_context_chars' => $contextLength,
                 'chat_history_chars'      => $historyLength,
-                'combined_payload_chars'  => $totalPayloadLength,
-            ]
+            ],
+            'total_tokens' => $llmResult['total_tokens']
         ]);
 
         return ['answer' => $llmResult['answer'], 'conversationId' => $conversationId];
