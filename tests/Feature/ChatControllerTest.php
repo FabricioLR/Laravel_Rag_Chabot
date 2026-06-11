@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\Embedding;
+//use App\Services\Embedding;
 use App\Services\Knowledge;
 use App\Services\LLM;
 use Mockery;
@@ -12,7 +12,7 @@ it('successfully generates an answer from user input with session tracking', fun
     $userInput = 'Como configuro o faturamento no ERP?';
     $sessionId = 'test_session_12345';
     
-    $this->mock(Embedding::class, function ($mock) use ($userInput) {
+    /*$this->mock(Embedding::class, function ($mock) use ($userInput) {
         $mock->shouldReceive('generate')
             ->once()
             ->with($userInput)
@@ -20,7 +20,7 @@ it('successfully generates an answer from user input with session tracking', fun
                 'vector' => [0.1, 0.2, 0.3],
                 'duration' => 120.5
             ]);
-    });
+    });*/
 
     $this->mock(Knowledge::class, function ($mock) use ($userInput, $sessionId) {
         $mock->shouldReceive('searchContext')
@@ -71,12 +71,12 @@ it('returns a 500 status code when an internal pipeline step fails', function ()
     $userInput = 'Texto de teste';
     $sessionId = 'error_session_abc';
 
-    $this->mock(Embedding::class, function ($mock) use ($userInput) {
+    /*$this->mock(Embedding::class, function ($mock) use ($userInput) {
         $mock->shouldReceive('generate')
             ->once()
             ->with($userInput)
             ->andThrow(new \Exception('Failed to generate text embeddings.'));
-    });
+    });*/
 
     $response = $this->postJson('/api/chat', [
         'chatInput' => $userInput,

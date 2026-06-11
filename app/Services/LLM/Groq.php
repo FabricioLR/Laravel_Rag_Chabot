@@ -4,6 +4,7 @@ namespace App\Services\LLM;
 
 use App\Contracts\LLM;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class Groq implements LLM

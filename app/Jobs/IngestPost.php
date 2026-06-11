@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Services\Embedding;
 use App\Services\TextSplitter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use League\HTMLToMarkdown\HtmlConverter;
 use Illuminate\Support\Facades\Cache;
+use App\Services\Embedding\EmbeddingManager;
 use Throwable; 
 use Exception;
 
@@ -40,12 +40,14 @@ class IngestPost implements ShouldQueue
         ]);
     }
 
-    public function handle(Embedding $embeddingService): void
+    public function handle(EmbeddingManager $embeddingManager): void
     {
         $postId = $this->postData['id'];
         $overrideIndexing = $this->postData['override_indexing'] ?? false;
 
         try {
+            $embeddingService = $embeddingManager->make();
+
             if ($overrideIndexing) {
                 Log::info('Override indexing activated. Purging existing vector entries for post.', [
                     'post_id' => $postId
@@ -100,7 +102,7 @@ class IngestPost implements ShouldQueue
             $chunks = TextSplitter::split($markdownContent, maxWords: 500, overlapWords: 50);
 
             foreach ($chunks as $index => $chunkText) {
-                $embeddingResult = $embeddingService->generate($chunkText);
+                $embeddingResult = $embeddingService->generate($chunkText, 'passage');
                 
                 $vectorArray = $embeddingResult['vector'];
                 $vectorString = '[' . implode(',', $vectorArray) . ']';

@@ -18,6 +18,10 @@ return [
         'provider' => env('LLM_PROVIDER', 'groq'),
     ],
 
+    'embedding' => [
+        'provider' => env('EMBEDDING_PROVIDER', 'huggingface'),
+    ],
+
     'huggingface' => [
         'key' => env('HUGGINGFACE_API_KEY'),
     ],

@@ -4,12 +4,12 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use App\Services\LLM\LLMManager;
+use App\Services\Embedding\EmbeddingManager;
 use Exception;
 
 class AnswerGeneration
 {
     public function __construct(
-        protected Embedding $embeddingService,
         protected Knowledge $knowledgeBaseService,
         protected ConversationHistory $historyService
     ) {}
@@ -25,10 +25,11 @@ class AnswerGeneration
         $totalStartTime = microtime(true);
 
         $llm = LLMManager::make();
+        $embeddingService = EmbeddingManager::make();
 
         $conversationHistory = $this->historyService->getFormattedHistory($sessionId);
 
-        $embeddingResult = $this->embeddingService->generate($userInput);
+        $embeddingResult = $embeddingService->generate($userInput, "query");
 
         $searchResult = $this->knowledgeBaseService->searchContext($userInput, $embeddingResult['vector'], $mainCategory, $childCategory);
 
