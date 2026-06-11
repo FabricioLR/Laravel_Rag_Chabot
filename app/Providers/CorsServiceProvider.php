@@ -22,6 +22,10 @@ class CorsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->runningInConsole()) {
+            return;
+        }
+        
         $tableExists = Cache::remember('cors_table_exists', now()->addDays(1), function () {
             return Schema::hasTable('allowed_domains');
         });
