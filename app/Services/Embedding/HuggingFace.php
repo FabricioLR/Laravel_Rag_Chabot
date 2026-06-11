@@ -26,7 +26,8 @@ class HuggingFace implements Embedding
         if ($response->failed()) {
             Log::error('Failed to generate text embeddings via Hugging Face.', [
                 'duration_ms' => $duration,
-                'status' => $response->status(),
+                'status'      => $response->status(),
+                'response'    => $response->json() ?? $response->body()
             ]);
             throw new Exception('Failed to generate text embeddings.');
         }

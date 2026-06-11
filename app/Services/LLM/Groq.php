@@ -52,7 +52,16 @@ class Groq implements LLM
 
         $duration = round((microtime(true) - $startTime) * 1000, 2);
 
-        if ($response->failed()) { throw new Exception('Groq API Error'); }
+        if ($response->failed()) { 
+            Log::error('Groq LLM API call failed catastrophically.', [
+                'session_id'  => $sessionId,
+                'duration_ms' => $duration,
+                'status'      => $response->status(),
+                'response'    => $response->json() ?? $response->body()
+            ]);
+
+            throw new Exception('Groq API Error');
+        }
 
         $data = $response->json();
         return [
