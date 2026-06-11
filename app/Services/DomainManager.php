@@ -73,7 +73,6 @@ class DomainManager
             return false;
         }
 
-        Log::info("DomainManager: Successfully authenticated access request for domain [{$domainRecord->name}].");
         return true;
     }
 }

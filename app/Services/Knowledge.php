@@ -94,27 +94,67 @@ class Knowledge
             'results_count' => count($results)
         ]);
 
+        $expandedContext = $this->buildWindowContext($results);
+
         return [
-            'context' => $this->formatContext($results),
+            'context' => $expandedContext,
             'duration' => $duration
         ];
     }
 
 
-    private function formatContext(array $results): string
+    private function buildWindowContext(array $results): string
     {
         $context = "";
-        foreach ($results as $index => $item) {
+        $processedPosts = [];
+
+        foreach ($results as $item) {
             $metadata = json_decode($item->metadata, true);
-            $sourceUrl = $metadata['source_post_url'] ?? 'N/A';
-            $sourceTitle = $metadata['source_post_title'] ?? 'N/A';
-            
-            $context .= "<" . $sourceTitle . ">\n";
-            $context .= "[URL do Post]: " . $sourceUrl . "\n";
-            $context .= "[Título do Post]: " . $sourceTitle . "\n";
-            $context .= "[Texto do Post]: " . $item->text . "\n";
-            $context .= "</" . $sourceTitle . ">\n\n";
+            $postId = $metadata['source_post_id'] ?? null;
+            $currentIndex = isset($metadata['chunk_index']) ? (int)$metadata['chunk_index'] : null;
+
+            if (!$postId || is_null($currentIndex)) {
+                $context .= $this->renderTag($metadata['source_post_title'] ?? 'N/A', $metadata['source_post_url'] ?? 'N/A', $item->text);
+                continue;
+            }
+
+            if (in_array($postId, $processedPosts)) {
+                continue;
+            }
+            $processedPosts[] = $postId;
+
+            $windowChunks = DB::connection('pgvector')
+                ->table('vectors')
+                ->where(DB::raw("metadata->>'source_post_id'"), (string)$postId)
+                ->whereIn(DB::raw("cast(metadata->>'chunk_index' as integer)"), [
+                    $currentIndex - 1, 
+                    $currentIndex, 
+                    $currentIndex + 1
+                ])
+                ->orderBy(DB::raw("cast(metadata->>'chunk_index' as integer)"))
+                ->pluck('text')
+                ->toArray();
+
+            $cohesiveText = implode("\n\n", $windowChunks);
+
+            $context .= $this->renderTag(
+                $metadata['source_post_title'] ?? 'N/A',
+                $metadata['source_post_url'] ?? 'N/A',
+                $cohesiveText
+            );
         }
+
         return $context;
     }
+
+    private function renderTag(string $title, string $url, string $text): string
+    {
+        $tag = "<" . $title . ">\n";
+        $tag .= "[URL do Post]: " . $url . "\n";
+        $tag .= "[Título do Post]: " . $title . "\n";
+        $tag .= "[Texto do Post]: " . $text . "\n";
+        $tag .= "</" . $title . ">\n\n";
+        return $tag;
+    }
+
 }

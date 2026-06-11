@@ -32,6 +32,8 @@ class CorsServiceProvider extends ServiceProvider
 
         try {
             $databaseOrigins = Cache::remember('cors_allowed_origins', now()->addMinutes(30), function () {
+                Log::info('CorsServiceProvider: Cache expired or missing. Fetching fresh domains from database.');
+
                 return AllowedDomain::where('is_active', true)
                     ->pluck('domain')
                     ->toArray();
@@ -44,11 +46,6 @@ class CorsServiceProvider extends ServiceProvider
 
                 config(['cors.allowed_origins' => $mergedOrigins]);
                 
-                Log::debug('CorsServiceProvider: Dynamic database origins successfully injected into runtime config.', [
-                    'total_origins' => count($mergedOrigins),
-                    'origins' => $mergedOrigins,
-                    'from_cache' => true
-                ]);
             }
         } catch (\Throwable $e) {
             Log::error('CorsServiceProvider: Failed to inject runtime dynamic CORS origins.', [
