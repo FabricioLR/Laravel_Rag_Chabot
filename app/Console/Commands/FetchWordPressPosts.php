@@ -9,19 +9,29 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Services\Ingestion;
 use Carbon\Carbon;
 
 #[Signature('app:fetch-word-press-posts')]
 #[Description('Fetch new, updated or unindexed WordPress posts')]
 class FetchWordPressPosts extends Command
 {
-    public function handle()
+    public function handle(Ingestion $ingestionService)
     {
         Log::info('WordPress post fetching pipeline initialized.');
         $startTime = microtime(true);
         
         $lastExecution = Cache::get('wp_last_execution', Carbon::now()->toDateTimeString());
-        $lastIndexedPosts = Cache::get('wp_last_indexed_posts', [0]);
+        $lastIndexedPosts = Cache::get('wp_last_indexed_posts');
+
+        if (is_null($lastIndexedPosts)) {
+            Log::warning('FetchWordPressPosts: Cache key [wp_last_indexed_posts] missing. Rebuilding using Ingestion Service...');
+            
+            $dbIds = $ingestionService->getIndexedPostsIds();
+            $lastIndexedPosts = !empty($dbIds) ? array_map('intval', $dbIds) : [0];
+            
+            Cache::forever('wp_last_indexed_posts', $lastIndexedPosts);
+        }
 
         $lastIndexedPostsString = implode(',', $lastIndexedPosts);
         $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));

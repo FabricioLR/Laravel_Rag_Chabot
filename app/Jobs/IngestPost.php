@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use League\HTMLToMarkdown\HtmlConverter;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Embedding\EmbeddingManager;
+use App\Services\Ingestion;
 use Throwable; 
 use Exception;
 
@@ -29,12 +30,23 @@ class IngestPost implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        $lastIndexedPosts = Cache::get('wp_last_indexed_posts', [0]);
-        $result = array_diff($lastIndexedPosts, [$this->postData['id']]);
+        $postId = $this->postData['id'] ?? null;
+        $lastIndexedPosts = Cache::get('wp_last_indexed_posts');
+
+        if (is_null($lastIndexedPosts)) {
+            try {
+                $ingestionService = app(Ingestion::class); 
+                $dbIds = $ingestionService->getIndexedPostsIds();
+                $lastIndexedPosts = !empty($dbIds) ? array_map('intval', $dbIds) : [0];
+            } catch (\Exception $e) {
+                $lastIndexedPosts = [0];
+            }
+        }
+        $result = array_diff($lastIndexedPosts, [$postId]);
         Cache::put('wp_last_indexed_posts', $result);
 
         Log::error('WordPress post ingestion job failed catastrophically.', [
-            'post_id'   => $this->postData['id'] ?? null,
+            'post_id'   => $postId,
             'exception' => get_class($exception),
             'message'   => $exception->getMessage()
         ]);
