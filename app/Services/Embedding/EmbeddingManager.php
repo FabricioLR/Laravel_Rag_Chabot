@@ -13,7 +13,7 @@ class EmbeddingManager
 
         return match (strtolower($provider)) {
             'huggingface' => new HuggingFace(),
-            //'openai'      => new OpenAIDriver(),
+            'openai'      => new OpenaiEmbedding(),
             default       => throw new InvalidArgumentException("Embedding Driver [{$provider}] is not supported."),
         };
     }

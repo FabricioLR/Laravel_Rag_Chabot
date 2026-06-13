@@ -24,10 +24,21 @@ return [
 
     'huggingface' => [
         'key' => env('HUGGINGFACE_API_KEY'),
+        'embedding_model' => env('HUGGINGFACE_EMBEDDING_MODEL', 'intfloat/multilingual-e5-large'),
     ],
 
     'groq' => [
         'key' => env('GROQ_API_KEY'),
+        'llm_model' => env('GROQ_LLM_MODEL', 'llama-3.1-8b-instant'),
+        'llm_model_temperature' => env('GROQ_LLM_MODEL_TEMPERATURE', 0.1),
+        'llm_model_max_output_tokens' => env('GROQ_LLM_MODEL_MAX_OUTPUT_TOKENS', 1024),
+    ],
+
+    'openai' => [
+        'llm_model' => env('OPENAI_LLM_MODEL', 'gpt-4o-mini'),
+        'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'llm_model_temperature' => env('OPENAI_LLM_MODEL_TEMPERATURE', 0.1),
+        'llm_model_max_output_tokens' => env('OPENAI_LLM_MODEL_MAX_OUTPUT_TOKENS', 1024),
     ],
 
     'postmark' => [

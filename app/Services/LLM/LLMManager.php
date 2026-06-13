@@ -13,7 +13,7 @@ class LLMManager
 
         return match (strtolower($provider)) {
             'groq'   => new Groq(),
-            //'openai' => new OpenAIDriver(),
+            'openai' => new OpenaiLLM(),
             default  => throw new InvalidArgumentException("LLM Driver [{$provider}] is not supported."),
         };
     }
