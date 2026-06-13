@@ -55,8 +55,8 @@ class OpenaiLLM implements LLM
             $response = OpenAI::chat()->create([
                 'model' => $model,
                 'messages' => $messages,
-                'temperature' => $temperature,
-                'max_tokens' => $maxOutputTokens,
+                'temperature' => (float)$temperature,
+                'max_tokens' => (int)$maxOutputTokens,
             ]);
 
             $durationMs = round((microtime(true) - $startTime) * 1000, 2);

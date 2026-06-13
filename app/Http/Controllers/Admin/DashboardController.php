@@ -28,6 +28,11 @@ class DashboardController extends Controller
 
             $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
             $feedbacks = $this->dashboardService->getPaginatedFeedback(5);
+
+            return view('admin.dashboard', array_merge($metrics, [
+                'domains' => $domains,
+                'feedbacks' => $feedbacks
+            ]));
         } catch (Throwable $e) {
             $metrics = [
                 'total_wordpress_posts' => 0,
@@ -38,12 +43,11 @@ class DashboardController extends Controller
                 'failed_jobs'           => [],
                 'error'                 => $e->getMessage()
             ];
+            return view('admin.dashboard', array_merge($metrics, [
+                'domains' => [],
+                'feedbacks' => []
+            ]));
         }
-
-        return view('admin.dashboard', array_merge($metrics, [
-            'domains' => $domains,
-            'feedbacks' => $feedbacks
-        ]));
     }
 
     public function storeDomain(Request $request): RedirectResponse

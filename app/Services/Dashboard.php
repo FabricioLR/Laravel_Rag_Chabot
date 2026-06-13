@@ -162,6 +162,7 @@ class Dashboard
         try {
             $failedJobs = DB::table('failed_jobs')
                 ->where('payload', 'like', '%IngestPost%')
+                ->where('failed_at', '>=', now()->subDays(3))
                 ->orderBy('failed_at', 'DESC')
                 ->limit(3)
                 ->get();

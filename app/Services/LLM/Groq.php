@@ -50,8 +50,8 @@ class Groq implements LLM
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $prompt]
                     ],
-                    'temperature' => $temperature,
-                    'max_tokens' => $maxOutputTokens
+                    'temperature' => (float)$temperature,
+                    'max_tokens' => (int)$maxOutputTokens
                 ]);
 
             $duration = round((microtime(true) - $startTime) * 1000, 2);

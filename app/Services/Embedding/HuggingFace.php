@@ -19,7 +19,7 @@ class HuggingFace implements Embedding
             $prefix = ($type === 'passage') ? 'passage: ' : 'query: ';
 
             $response = Http::withToken($apiKey)
-                ->post('https://router.huggingface.co/hf-inference/models/intfloat/' . $model . '/pipeline/feature-extraction', [
+                ->post('https://router.huggingface.co/hf-inference/models/' . $model . '/pipeline/feature-extraction', [
                     'inputs' => $prefix . $text,
                 ]);
 
