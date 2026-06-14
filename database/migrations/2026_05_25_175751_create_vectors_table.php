@@ -14,12 +14,15 @@ return new class extends Migration
         DB::connection("pgvector")->statement('CREATE EXTENSION IF NOT EXISTS vector;');
 
         if (!Schema::connection('pgvector')->hasTable('vectors')) {
+
             Schema::connection('pgvector')->create('vectors', function (Blueprint $table) {
                 $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
                 $table->text('text');
                 $table->jsonb('metadata')->nullable();
+
+                $provider = config('services.embedding.provider', env('EMBEDDING_PROVIDER', 'huggingface'));
                 
-                $table->vector('embedding', 1024);
+                $table->vector('embedding', config("services.{$provider}.embedding_model_dimensions", env(strtoupper($provider) . '_EMBEDDING_MODEL_DIMENSIONS', 1024)));
                 
                 $table->timestamps();
             });

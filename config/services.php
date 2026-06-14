@@ -25,6 +25,7 @@ return [
     'huggingface' => [
         'key' => env('HUGGINGFACE_API_KEY'),
         'embedding_model' => env('HUGGINGFACE_EMBEDDING_MODEL', 'intfloat/multilingual-e5-large'),
+        'embedding_model_dimensions' => env('HUGGINGFACE_EMBEDDING_MODEL_DIMENSIONS', 1024),
     ],
 
     'groq' => [
@@ -37,6 +38,7 @@ return [
     'openai' => [
         'llm_model' => env('OPENAI_LLM_MODEL', 'gpt-4o-mini'),
         'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'embedding_model_dimensions' => env('OPENAI_EMBEDDING_MODEL_DIMENSIONS', 1536),
         'llm_model_temperature' => env('OPENAI_LLM_MODEL_TEMPERATURE', 0.1),
         'llm_model_max_output_tokens' => env('OPENAI_LLM_MODEL_MAX_OUTPUT_TOKENS', 1024),
     ],
