@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
 class AllowedDomain extends Model
 {
+    use HasFactory;
     protected $fillable = ['name', 'domain', 'token', 'is_active'];
 
     protected static function booted()

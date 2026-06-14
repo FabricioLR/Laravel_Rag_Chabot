@@ -10,7 +10,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - chatbot_test_net
+      - test
 
   db:
     image: pgvector/pgvector:pg15
@@ -26,8 +26,8 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - chatbot_test_net
+      - test
 
 networks:
-  chatbot_test_net:
+  test:
     driver: bridge

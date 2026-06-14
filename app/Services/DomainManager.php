@@ -49,7 +49,7 @@ class DomainManager
 
     public function verify(string $token, string $incomingOrigin): bool
     {
-        $cleanOrigin = rtrim($incomingOrigin, '/');
+        $cleanOrigin = Str::lower(rtrim($incomingOrigin, '/'));
 
         $domainRecord = AllowedDomain::where('token', $token)
             ->where('is_active', true)
@@ -62,7 +62,9 @@ class DomainManager
             return false;
         }
 
-        $isMatch = ($domainRecord->domain === $cleanOrigin || $domainRecord->domain === '*');
+        $registeredPattern = Str::lower($domainRecord->domain);
+
+        $isMatch = Str::is($registeredPattern, $cleanOrigin);
 
         if (!$isMatch) {
             Log::warning('DomainManager: Verification rejected. Origin mismatch detected for token.', [
