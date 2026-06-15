@@ -7,7 +7,7 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [isLoading, activeOptions, isOpen]);
+  }, [activeOptions, isOpen]);
 
   return (
     <div className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3">

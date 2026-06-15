@@ -8,9 +8,7 @@ use Illuminate\Support\Collection;
 
 class ConversationHistory
 {
-    /**
-     * Store the new interaction.
-     */
+
     public function store(string $sessionId, string $question, string $answer): int
     {
         return DB::table('conversation_histories')->insertGetId([
@@ -22,20 +20,18 @@ class ConversationHistory
         ]);
     }
 
-    /**
-     * Retrieve the last 5 interactions formatted as a context string.
-     */
     public function getFormattedHistory(string $sessionId): string
     {
+        $maxRecentConversationHistory = config("rag.history.max_recent", env("RAG_MAX_RECENT_CONVERSATION_HISTORY", 3));
         Log::info('Retrieving conversation history context window.', [
             'session_id' => $sessionId,
-            'limit' => 3
+            'limit' => $maxRecentConversationHistory
         ]);
 
         $history = DB::table('conversation_histories')
             ->where('session_id', $sessionId)
             ->orderBy('id', 'desc')
-            ->limit(3)
+            ->limit($maxRecentConversationHistory)
             ->get()
             ->reverse();
 
@@ -48,11 +44,6 @@ class ConversationHistory
             $formatted .= "Usuário: " . $interaction->question . "\n";
             $formatted .= "Assistente: " . $interaction->answer . "\n\n";
         }
-
-        Log::info('Conversation history successfully compiled and formatted for LLM ingestion context.', [
-            'session_id' => $sessionId,
-            'string_length' => strlen($formatted)
-        ]);
 
         return $formatted;
     }

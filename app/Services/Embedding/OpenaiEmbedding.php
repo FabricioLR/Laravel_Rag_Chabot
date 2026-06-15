@@ -13,7 +13,7 @@ class OpenaiEmbedding implements Embedding
         try {
             $startTime = microtime(true);
 
-            $model = config('services.openai.embedding_model', env('OPENAI_EMBEDDING_MODEL'));
+            $model = config('services.openai.embedding_model', env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'));
 
             $response = OpenAI::embeddings()->create([
                 'model' => $model,

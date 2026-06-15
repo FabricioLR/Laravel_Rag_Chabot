@@ -202,14 +202,16 @@
                                         </td>
                                         
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                            @if(in_array(strtolower($feedback->feedback), ['positive', 'thumbs_up', 'upvote', 'up', '1']))
+                                            @if(in_array(strtolower($feedback->feedback), ['positive']))
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
                                                     Helpful
                                                 </span>
-                                            @else
+                                            @elseif(in_array(strtolower($feedback->feedback), ['negative']))
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
                                                     Unhelpful
                                                 </span>
+                                            @else
+                                                
                                             @endif
                                         </td>
                                         

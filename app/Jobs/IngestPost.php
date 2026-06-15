@@ -110,8 +110,11 @@ class IngestPost implements ShouldQueue
                 'bold_style' => '**',       
             ]);
 
+            $maxWords = config('rag.ingestion.max_words', env("RAG_INGEST_MAX_WORDS", 500));
+            $overlapWords = config('rag.ingestion.overlap_words', env("RAG_INGEST_OVERLAP_WORDS", 50));
+
             $markdownContent = $converter->convert($post->post_content);
-            $chunks = TextSplitter::split($markdownContent, maxWords: 500, overlapWords: 50);
+            $chunks = TextSplitter::split($markdownContent, maxWords: $maxWords, overlapWords: $overlapWords);
 
             foreach ($chunks as $index => $chunkText) {
                 $embeddingResult = $embeddingService->generate($chunkText, 'passage');

@@ -259,8 +259,6 @@ class Dashboard
         Log::info('Fetching paginated user feedback logs for admin dashboard.');
 
         return DB::table('conversation_histories')
-            ->whereNotNull('feedback')
-            ->where('feedback', '!=', '')
             ->select('id', 'session_id', 'question', 'answer', 'feedback', 'created_at')
             ->orderBy('created_at', 'DESC')
             ->paginate($perPage);

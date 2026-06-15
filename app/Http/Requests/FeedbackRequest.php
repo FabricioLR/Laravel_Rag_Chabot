@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class FeedbackRequest extends FormRequest
@@ -24,7 +25,11 @@ class FeedbackRequest extends FormRequest
     {
         return [
             'conversationId' => 'required|int',
-            'rating' => 'required|string',
+            'rating' => [
+                'required',
+                'string',
+                Rule::in(['positive', 'negative']),
+             ],
         ];
     }
 }
