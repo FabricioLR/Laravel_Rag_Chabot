@@ -54,7 +54,7 @@ class DashboardController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'domain' => 'required|url|unique:allowed_domains,domain'
+            'domain' => 'required|unique:allowed_domains,domain'
         ]);
 
         try {

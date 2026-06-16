@@ -115,8 +115,8 @@ class Knowledge
 
     private function buildWindowContext(array $results): string
     {
-        $charsPerToken = config("rag.search.chars_per_token", env("RAG_CHARS_PER_TOKEN", 2.7));
-        $maxContextTokens = config("rag.search.max_tokens", env("RAG_MAX_CONTEXT_TOKENS", 6000));
+        $charsPerToken = config("rag.context.chars_per_token", env("RAG_CHARS_PER_TOKEN", 2.7));
+        $maxContextTokens = config("rag.context.max_tokens", env("RAG_MAX_CONTEXT_TOKENS", 6000));
         
         $contextBlocks = [];
         $currentTokensCount = 0;
