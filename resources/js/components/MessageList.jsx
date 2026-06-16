@@ -3,34 +3,66 @@ import MessageFeedback from './MessageFeedback';
 import { formatBotResponse } from './utils/formatters';
 
 export default function MessageList({ messages, isLoading, activeOptions, onOptionClick, appUrl, clientToken, isOpen }) {
+  const containerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const lastMessageRef = useRef(null);
+  const isInitialRender = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeOptions, isOpen]);
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (lastMessageRef.current && containerRef.current) {
+      const container = containerRef.current;
+      const lastMessage = lastMessageRef.current;
+
+      const targetScrollTop = lastMessage.offsetTop - 10;
+
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+    }
+  }, [messages, activeOptions]);
 
   return (
-    <div className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3">
-      {messages.map((msg, index) => (
-        <div 
-          key={index} 
-          className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${
-            msg.sender === 'user' ? 'bg-slate-200 text-slate-800 self-end ml-auto' : 'bg-slate-200 text-slate-800 self-start'
-          }`}
-        >
-          <div className="max-w-xs md:max-w-md p-3 rounded-lg overflow-hidden break-words whitespace-pre-wrap bg-gray-100">
-            {msg.sender === 'bot' ? (
-              <span dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
-            ) : (
-              msg.text
+    <div 
+      ref={containerRef}
+      className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3 relative"
+    >
+      {messages.map((msg, index) => {
+        const isLast = index === messages.length - 1;
+
+        return (
+          <div 
+            key={index} 
+            ref={isLast ? lastMessageRef : null}
+            className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${
+              msg.sender === 'user' ? 'bg-slate-200 text-slate-800 self-end ml-auto' : 'bg-slate-200 text-slate-800 self-start'
+            }`}
+          >
+            <div className="max-w-xs md:max-w-md p-3 rounded-lg overflow-hidden break-words whitespace-pre-wrap bg-gray-100">
+              {msg.sender === 'bot' ? (
+                <span dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
+              ) : (
+                msg.text
+              )}
+            </div>
+            
+            {msg.sender === 'bot' && msg.isApi && msg.feedback === null && (
+              <MessageFeedback appUrl={appUrl} clientToken={clientToken} conversationId={msg.id} />
             )}
           </div>
-          
-          {msg.sender === 'bot' && msg.isApi && msg.feedback === null && (
-            <MessageFeedback appUrl={appUrl} clientToken={clientToken} conversationId={msg.id} />
-          )}
-        </div>
-      ))}
+        );
+      })}
 
       {isLoading && (
         <div className="bg-slate-200 text-slate-800 self-start p-3 rounded-lg flex gap-1">
@@ -49,6 +81,7 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
           ))}
         </div>
       )}
+      
       <div ref={messagesEndRef} />
     </div>
   );
