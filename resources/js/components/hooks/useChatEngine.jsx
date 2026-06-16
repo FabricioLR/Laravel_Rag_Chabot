@@ -136,6 +136,7 @@ export function useChatEngine(appUrl, clientToken) {
       lastUserMessageRef.current = text; 
 
       try {
+        setActiveOptions([]);
         const response = await fetch(`${appUrl}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Client-Token': clientToken },

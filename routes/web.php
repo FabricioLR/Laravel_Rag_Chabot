@@ -12,7 +12,9 @@ if (config('admin.widget.enabled', env('ENABLE_LOCAL_WIDGET')) == true) {
 
 Route::middleware('guest')->prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('admin.login.submit');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:login')
+        ->name('admin.login.submit');
 });
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
