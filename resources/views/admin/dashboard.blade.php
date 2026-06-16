@@ -415,15 +415,29 @@
 
                 let textToCopy = codeBlock.innerText || codeBlock.textContent;
 
-                textToCopy = textToCopy.trim();
-                textToCopy = textToCopy.replaceAll("\n", "")
-                const minifierRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\s+)/g;
-                textToCopy = textToCopy.replace(minifierRegex, (match, stringLiteral, whitespace) => {
-                    if (stringLiteral) {
-                        return stringLiteral;
+                const stringRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)/g;
+                
+                const tokens = textToCopy.split(stringRegex);
+
+                const processedTokens = tokens.map((token, index) => {
+                    if (index % 2 !== 0) {
+                        return token; 
                     }
-                    return '';
+
+                    return token
+                        .replace(/\r?\n|\r/g, '')
+                        .replace(/\s+/g, (match, offset, fullString) => {
+                            const prevChar = fullString[offset - 1];
+                            const nextChar = fullString[offset + match.length];
+
+                            if (prevChar && nextChar && /\w/.test(prevChar) && /\w/.test(nextChar)) {
+                                return ' ';
+                            }
+                            return '';
+                        });
                 });
+
+                textToCopy = processedTokens.join('').trim();
 
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     const textSpan = buttonElement.querySelector('.btn-text');
@@ -438,7 +452,7 @@
                         buttonElement.classList.add('bg-slate-800/90', 'text-slate-300', 'border-slate-700');
                     }, 2000);
                 }).catch(err => {
-                    console.error('Falha ao copiar o script: ', err);
+                    console.error('Failed to copy the script: ', err);
                 });
             }
 
