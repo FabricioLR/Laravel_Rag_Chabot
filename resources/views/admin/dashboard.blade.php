@@ -298,18 +298,46 @@
                 </div>
             </div>
 
-            <div id="snippetModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-                <div class="bg-white max-w-2xl w-full rounded-xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150">
+            <div 
+                id="snippetModal" 
+                class="fixed inset-0 z-50 min-w-full min-h-screen bg-gray-900/60 backdrop-blur-sm hidden flex-col justify-center items-center p-4"
+            >
+                <div class="bg-white max-w-2xl w-full rounded-xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-150 mx-auto my-auto">
+                    
                     <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                         <h3 id="modalTitle" class="text-base font-bold text-gray-900">Embedded Snippet Config</h3>
-                        <button onclick="closeSnippetModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                        <button onclick="closeSnippetModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">&times;</button>
                     </div>
+                    
                     <div class="p-6">
-                        <p class="text-sm text-gray-600 mb-3">Instruct your client to paste this HTML/JS integration payload block inside their global web layout file right before closing the trailing <code class="font-mono bg-gray-100 text-xs p-0.5 rounded">&lt;/body&gt;</code> element block:</p>
-                        <div class="relative">
-                            <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-xs overflow-x-auto select-all leading-relaxed" id="codeBlock"></pre>
+                        <p class="text-sm text-gray-600 mb-3">
+                            Instruct your client to paste this HTML/JS integration payload block inside their global web layout file right before closing the trailing 
+                            <code class="font-mono bg-gray-100 text-xs p-0.5 rounded">&lt;/body&gt;</code> element block:
+                        </p>
+                        
+                        <div class="relative w-full">
+                            <button 
+                                onclick="copyCodeSnippet(this)" 
+                                class="absolute top-3 right-3 z-20 bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium py-1.5 px-2.5 rounded border border-slate-700 transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                                </svg>
+                                <span class="btn-text">Copy</span>
+                            </button>
+
+                            <pre 
+                                class="bg-slate-900 text-slate-100 p-5 rounded-lg font-mono text-xs overflow-auto max-h-80 leading-relaxed text-left
+                                    [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2
+                                    [&::-webkit-scrollbar-track]:bg-[#0f172a] [&::-webkit-scrollbar-track]:rounded-r-lg
+                                    [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full
+                                    [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-[#0f172a]
+                                    [&::-webkit-scrollbar-thumb:hover]:bg-slate-600" 
+                                id="codeBlock"
+                            ></pre>
                         </div>
                     </div>
+                    
                     <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex justify-end">
                         <button onclick="closeSnippetModal()" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded transition-colors">
                             Dismiss
@@ -328,14 +356,48 @@
 
                 title.innerText = `Integration Script for ${name}`;
                 
-                codeBlock.innerText = `\n` +
-                                    `<link rel="stylesheet" href="${appUrl}/build/widget.css">\n` +    
-                                    `<script\n` +
-                                    `    id="chatbot-initializer"\n` +
-                                    `    src="${appUrl}/build/widget.js"\n` +
-                                    `    data-app-url="${appUrl}"\n` +
-                                    `    data-client-token="${token}">\n` +
-                                    `<\/script>`;
+                const TIMEOUT_MS = 10000; 
+
+                codeBlock.innerText = 
+                    `<script>\n` +
+                    `  (function() {\n` +
+                    `    const appUrl = "${appUrl}";\n` +
+                    `    const token = "${token}";\n` +
+                    `    const timeoutDuration = ${TIMEOUT_MS};\n\n` +
+                    
+                    `    function loadAsset(tagType, attributes) {\n` +
+                    `      return new Promise((resolve, reject) => {\n` +
+                    `        const element = document.createElement(tagType);\n` +
+                    `        Object.assign(element, attributes);\n\n` +
+                    
+                    `        const timer = setTimeout(() => {\n` +
+                    `          element.onload = element.onerror = null;\n` +
+                    `          element.remove();\n` +
+                    `          reject(new Error(\`Timeout loading \${attributes.src || attributes.href}\`));\n` +
+                    `        }, timeoutDuration);\n\n` +
+                    
+                    `        element.onload = () => { clearTimeout(timer); resolve(); };\n` +
+                    `        element.onerror = () => { clearTimeout(timer); element.remove(); reject(new Error(\`Failed to load \${attributes.src || attributes.href}\`)); };\n\n` +
+                    
+                    `        document.head.appendChild(element);\n` +
+                    `      });\n` +
+                    `    }\n\n` +
+                    
+                    `    Promise.all([\n` +
+                    `      loadAsset('link', { rel: 'stylesheet', href: \`\${appUrl}/build/widget.css\` }),\n` +
+                    `      loadAsset('script', {\n` +
+                    `        id: 'chatbot-initializer',\n` +
+                    `        src: \`\${appUrl}/build/widget.js\`,\n` +
+                    `        type: 'text/javascript',\n` +
+                    `        async: true\n` +
+                    `      })\n` +
+                    `    ]).then(() => {\n` +
+                    `      window.dispatchEvent(new CustomEvent('chatbot-ready', { detail: { appUrl, token } }));\n` +
+                    `    }).catch(err => {\n` +
+                    `      console.warn('Chatbot Widget failed to load within timeout:', err.message);\n` +
+                    `    });\n` +
+                    `  })();\n` +
+                    `<\/script>`;
 
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -345,6 +407,39 @@
                 const modal = document.getElementById('snippetModal');
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
+            }
+
+            function copyCodeSnippet(buttonElement) {
+                const codeBlock = document.getElementById('codeBlock');
+                if (!codeBlock) return;
+
+                let textToCopy = codeBlock.innerText || codeBlock.textContent;
+
+                textToCopy = textToCopy.trim();
+                textToCopy = textToCopy.replaceAll("\n", "")
+                const minifierRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\s+)/g;
+                textToCopy = textToCopy.replace(minifierRegex, (match, stringLiteral, whitespace) => {
+                    if (stringLiteral) {
+                        return stringLiteral;
+                    }
+                    return '';
+                });
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const textSpan = buttonElement.querySelector('.btn-text');
+                    
+                    textSpan.textContent = 'Copied!';
+                    buttonElement.classList.remove('bg-slate-800/90', 'text-slate-300', 'border-slate-700');
+                    buttonElement.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+
+                    setTimeout(() => {
+                        textSpan.textContent = 'Copy';
+                        buttonElement.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+                        buttonElement.classList.add('bg-slate-800/90', 'text-slate-300', 'border-slate-700');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Falha ao copiar o script: ', err);
+                });
             }
 
             function copySessionId(text, element) {
