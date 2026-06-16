@@ -355,50 +355,15 @@
                 const appUrl = "{{ config('app.url') }}";
 
                 title.innerText = `Integration Script for ${name}`;
-                
-                const TIMEOUT_MS = 10000; 
 
-                codeBlock.innerText = 
-                    `<script>\n` +
-                    `  (function() {\n` +
-                    `    const appUrl = "${appUrl}";\n` +
-                    `    const token = "${token}";\n` +
-                    `    const timeoutDuration = ${TIMEOUT_MS};\n\n` +
+                codeBlock.innerText = `<link rel="stylesheet" href="${appUrl}/build/widget.css">\n` +    
+                                    `<script\n` +
+                                    `    id="chatbot-initializer"\n` +
+                                    `    src="${appUrl}/build/widget.js"\n` +
+                                    `    data-app-url="${appUrl}"\n` +
+                                    `    data-client-token="${token}">\n` +
+                                    `<\/script>`;
                     
-                    `    function loadAsset(tagType, attributes) {\n` +
-                    `      return new Promise((resolve, reject) => {\n` +
-                    `        const element = document.createElement(tagType);\n` +
-                    `        Object.assign(element, attributes);\n\n` +
-                    
-                    `        const timer = setTimeout(() => {\n` +
-                    `          element.onload = element.onerror = null;\n` +
-                    `          element.remove();\n` +
-                    `          reject(new Error(\`Timeout loading \${attributes.src || attributes.href}\`));\n` +
-                    `        }, timeoutDuration);\n\n` +
-                    
-                    `        element.onload = () => { clearTimeout(timer); resolve(); };\n` +
-                    `        element.onerror = () => { clearTimeout(timer); element.remove(); reject(new Error(\`Failed to load \${attributes.src || attributes.href}\`)); };\n\n` +
-                    
-                    `        document.head.appendChild(element);\n` +
-                    `      });\n` +
-                    `    }\n\n` +
-                    
-                    `    Promise.all([\n` +
-                    `      loadAsset('link', { rel: 'stylesheet', href: \`\${appUrl}/build/widget.css\` }),\n` +
-                    `      loadAsset('script', {\n` +
-                    `        id: 'chatbot-initializer',\n` +
-                    `        src: \`\${appUrl}/build/widget.js\`,\n` +
-                    `        type: 'text/javascript',\n` +
-                    `        async: true\n` +
-                    `      })\n` +
-                    `    ]).then(() => {\n` +
-                    `      window.dispatchEvent(new CustomEvent('chatbot-ready', { detail: { appUrl, token } }));\n` +
-                    `    }).catch(err => {\n` +
-                    `      console.warn('Chatbot Widget failed to load within timeout:', err.message);\n` +
-                    `    });\n` +
-                    `  })();\n` +
-                    `<\/script>`;
-
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
@@ -414,30 +379,6 @@
                 if (!codeBlock) return;
 
                 let textToCopy = codeBlock.innerText || codeBlock.textContent;
-
-                const stringRegex = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)/g;
-                
-                const tokens = textToCopy.split(stringRegex);
-
-                const processedTokens = tokens.map((token, index) => {
-                    if (index % 2 !== 0) {
-                        return token; 
-                    }
-
-                    return token
-                        .replace(/\r?\n|\r/g, '')
-                        .replace(/\s+/g, (match, offset, fullString) => {
-                            const prevChar = fullString[offset - 1];
-                            const nextChar = fullString[offset + match.length];
-
-                            if (prevChar && nextChar && /\w/.test(prevChar) && /\w/.test(nextChar)) {
-                                return ' ';
-                            }
-                            return '';
-                        });
-                });
-
-                textToCopy = processedTokens.join('').trim();
 
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     const textSpan = buttonElement.querySelector('.btn-text');

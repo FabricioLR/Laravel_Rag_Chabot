@@ -3,17 +3,16 @@ import { createRoot } from 'react-dom/client';
 import ChatWidget from './components/ChatWidget';
 import '../css/widget.css';
 
-window.addEventListener('chatbot-ready', (event) => {
-    const { appUrl, token } = event.detail;
+(function () {
+    const initScript = document.getElementById('chatbot-initializer');
 
-    if (!appUrl || !token) {
-        console.error("Chatbot widget initialization failed: Missing required parameters in event payload.");
+    if (!initScript) {
+        console.error("Chatbot widget initialization failed: Missing '#chatbot-initializer' ID.");
         return;
     }
 
-    if (document.getElementById('chat-widget-react-root')) {
-        return;
-    }
+    const appUrl = initScript.getAttribute('data-app-url');
+    const clientToken = initScript.getAttribute('data-client-token');
 
     const widgetTarget = document.createElement('div');
     widgetTarget.id = 'chat-widget-react-root';
@@ -22,7 +21,7 @@ window.addEventListener('chatbot-ready', (event) => {
     const root = createRoot(widgetTarget);
     root.render(
         <React.StrictMode>
-            <ChatWidget appUrl={appUrl} clientToken={token} />
+            <ChatWidget appUrl={appUrl} clientToken={clientToken} />
         </React.StrictMode>
     );
-});
+})();
