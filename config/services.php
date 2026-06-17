@@ -16,6 +16,7 @@ return [
 
     'llm' => [
         'provider' => env('LLM_PROVIDER', 'groq'),
+        'system_prompt' => env('LLM_SYSTEM_PROMPT', ''),
     ],
 
     'embedding' => [

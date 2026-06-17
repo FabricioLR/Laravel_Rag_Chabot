@@ -96,7 +96,11 @@ class Knowledge
                 'main_category' => $mainCategory,
                 'child_category' => $childCategory
             ]);
-            throw new Exception('No context found for this input.');
+            
+            return [
+                'context' => "",
+                'duration' => $duration
+            ];
         }
 
         Log::info('Hybrid search execution completed.', [
