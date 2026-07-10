@@ -63,7 +63,7 @@ export function useChatEngine(appUrl, clientToken) {
   const syncAndInitialize = async () => {
     try {
       const historyRes = await fetch(`${appUrl}/api/chat/history/${sessionId}`, {
-        headers: { 'Accept': 'application/json', 'X-Client-Token': clientToken }
+        headers: { 'Accept': 'application/json', 'X-Client-Token': clientToken, 'Content-Type': 'application/json; charset=UTF-8' }
       });
       const historyData = historyRes.ok ? await historyRes.json() : { messages: [] };
       
@@ -76,7 +76,7 @@ export function useChatEngine(appUrl, clientToken) {
       }));
 
       const categoriesRes = await fetch(`${appUrl}/api/chat/categories`, {
-        headers: { 'X-Client-Token': clientToken, 'Accept': 'application/json' }
+        headers: { 'X-Client-Token': clientToken, 'Accept': 'application/json', 'Content-Type': 'application/json; charset=UTF-8' }
       });
       const categoriesData = await categoriesRes.json();
 
@@ -139,7 +139,7 @@ export function useChatEngine(appUrl, clientToken) {
         setActiveOptions([]);
         const response = await fetch(`${appUrl}/api/chat`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Client-Token': clientToken },
+          headers: { 'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json', 'X-Client-Token': clientToken },
           body: JSON.stringify({
             chatInput: text,
             sessionId,

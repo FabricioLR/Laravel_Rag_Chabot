@@ -361,7 +361,8 @@
                                     `    id="chatbot-initializer"\n` +
                                     `    src="${appUrl}/build/widget.js"\n` +
                                     `    data-app-url="${appUrl}"\n` +
-                                    `    data-client-token="${token}">\n` +
+                                    `    data-client-token="${token}"\n` +
+                                    `    charset="UTF-8">\n` +
                                     `<\/script>`;
                     
                 modal.classList.remove('hidden');

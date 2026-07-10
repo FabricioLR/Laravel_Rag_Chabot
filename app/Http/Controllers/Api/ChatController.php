@@ -39,11 +39,11 @@ class ChatController extends Controller
             
             return response()->json([
                 'categories' => $categories
-            ], 200);
+            ], 200)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
         }
     }
 
@@ -54,9 +54,11 @@ class ChatController extends Controller
 
             return response()->json([
                 'messages' => $messages
-            ], 200);
+            ], 200)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
         }
     }
 
@@ -82,11 +84,11 @@ class ChatController extends Controller
                 'conversationId' => $result['conversationId'],
                 'answer' => $result['answer'],
                 'question' => $userInput
-            ]);
+            ])->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
         }
     }
 

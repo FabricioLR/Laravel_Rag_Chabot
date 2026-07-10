@@ -12,7 +12,7 @@ export default function MessageFeedback({ appUrl, clientToken, conversationId })
       const response = await fetch(`${appUrl}/api/chat/feedback`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
           'X-Client-Token': clientToken
         },
