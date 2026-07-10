@@ -14,11 +14,28 @@ import '../css/widget.css';
     const appUrl = initScript.getAttribute('data-app-url');
     const clientToken = initScript.getAttribute('data-client-token');
 
+    if (!appUrl || !clientToken) {
+        console.warn("ChatEngine: Aborting initialization. Missing appUrl or clientToken.", { appUrl, clientToken });
+        return;
+    }
+
     const widgetTarget = document.createElement('div');
-    widgetTarget.id = 'chat-widget-react-root';
+    widgetTarget.id = 'chat-widget-root-host';
     document.body.appendChild(widgetTarget);
 
-    const root = createRoot(widgetTarget);
+    const shadowRoot = widgetTarget.attachShadow({ mode: 'open' });
+
+    const reactRootTarget = document.createElement('div');
+    reactRootTarget.id = 'chat-widget-react-root';
+    
+    const linkElement = document.createElement('link');
+    linkElement.rel = 'stylesheet';
+    linkElement.href = `${appUrl}/build/widget.css`;
+
+    shadowRoot.appendChild(linkElement);
+    shadowRoot.appendChild(reactRootTarget);
+
+    const root = createRoot(reactRootTarget);
     root.render(
         <React.StrictMode>
             <ChatWidget appUrl={appUrl} clientToken={clientToken} />

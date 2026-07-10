@@ -36,7 +36,7 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
   return (
     <div 
       ref={containerRef}
-      className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-3 relative"
+      className="cb:flex-1 cb:p-4 cb:overflow-y-auto cb:bg-slate-50 cb:flex cb:flex-col cb:gap-3 cb:relative"
     >
       {messages.map((msg, index) => {
         const isLast = index === messages.length - 1;
@@ -45,11 +45,11 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
           <div 
             key={index} 
             ref={isLast ? lastMessageRef : null}
-            className={`p-2.5 max-w-[80%] rounded-lg leading-relaxed ${
-              msg.sender === 'user' ? 'bg-slate-200 text-slate-800 self-end ml-auto' : 'bg-slate-200 text-slate-800 self-start'
+            className={`cb:p-2.5 cb:max-w-[80%] cb:rounded-lg cb:leading-relaxed ${
+              msg.sender === 'user' ? 'cb:bg-slate-200 cb:text-slate-800 cb:self-end cb:ml-auto' : 'cb:bg-slate-200 cb:text-slate-800 cb:self-start'
             }`}
           >
-            <div className="max-w-xs md:max-w-md p-3 rounded-lg overflow-hidden break-words whitespace-pre-wrap bg-gray-100">
+            <div className="cb:max-w-xs cb:md:max-w-md cb:p-3 cb:rounded-lg cb:overflow-hidden cb:break-words cb:whitespace-pre-wrap cb:bg-gray-100">
               {msg.sender === 'bot' ? (
                 <span dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
               ) : (
@@ -65,17 +65,17 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
       })}
 
       {isLoading && (
-        <div className="bg-slate-200 text-slate-800 self-start p-3 rounded-lg flex gap-1">
-          <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce"></span>
-          <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-          <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+        <div className="cb:bg-slate-200 cb:text-slate-800 cb:self-start cb:p-3 cb:rounded-lg cb:flex cb:gap-1">
+          <span className="cb:w-1.5 cb:h-1.5 cb:bg-slate-500 cb:rounded-full cb:animate-bounce"></span>
+          <span className="cb:w-1.5 cb:h-1.5 cb:bg-slate-500 cb:rounded-full cb:animate-bounce cb:[animation-delay:0.2s]"></span>
+          <span className="cb:w-1.5 cb:h-1.5 cb:bg-slate-500 cb:rounded-full cb:animate-bounce cb:[animation-delay:0.4s]"></span>
         </div>
       )}
 
       {activeOptions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2 max-w-[90%] self-start">
+        <div className="cb:flex cb:flex-wrap cb:gap-2 cb:mt-2 cb:max-w-[90%] cb:self-start">
           {activeOptions.map((opt, i) => (
-            <button key={i} onClick={() => onOptionClick(opt.value ? opt.value : opt.name)} className="cursor-pointer bg-white text-blue-600 border border-blue-600 px-3 py-1.5 rounded-full font-medium text-xs hover:bg-blue-600 hover:text-white transition-all">
+            <button key={i} onClick={() => onOptionClick(opt.value ? opt.value : opt.name)} className="cb:cursor-pointer cb:bg-white cb:text-blue-600 cb:border cb:border-blue-600 cb:px-3 cb:py-1.5 cb:rounded-full cb:font-medium cb:text-xs cb:hover:bg-blue-600 cb:hover:text-white cb:transition-all">
               {opt.name}
             </button>
           ))}

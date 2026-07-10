@@ -2,15 +2,15 @@ import React from 'react';
 
 export default function ChatHeader({ currentStep, onReset, onClose }) {
   return (
-    <div className="bg-blue-600 text-white p-4 font-bold flex justify-between items-center">
+    <div className="cb:bg-blue-600 cb:text-white cb:p-4 cb:font-bold cb:flex cb:justify-between cb:items-center">
       <span>Assistente Virtual</span>
-      <div className="flex items-center gap-3">
+      <div className="cb:flex cb:items-center cb:gap-3">
         {currentStep === 'completed' && (
-          <button onClick={onReset} className="cursor-pointer bg-white/15 text-white border border-white/30 px-2 py-1 rounded text-xs">
+          <button onClick={onReset} className="cb:cursor-pointer cb:bg-white/15 cb:text-white cb:border cb:border-white/30 cb:px-2 cb:py-1 cb:rounded cb:text-xs">
             Alterar Categoria
           </button>
         )}
-        <span onClick={onClose} className="cursor-pointer text-lg">✕</span>
+        <span onClick={onClose} className="cb:cursor-pointer cb:text-lg">✕</span>
       </div>
     </div>
   );

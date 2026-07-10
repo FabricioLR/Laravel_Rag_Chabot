@@ -36,11 +36,11 @@ export default function MessageFeedback({ appUrl, clientToken, conversationId })
   }
 
   return (
-    <div className="flex justify-end gap-2 mt-1.5 pt-1 border-t border-slate-300/50">
+    <div className="cb:flex cb:justify-end cb:gap-2 cb:mt-1.5 cb:pt-1 cb:border-t cb:border-slate-300/50">
       <button 
         onClick={() => sendFeedback('positive')} 
         disabled={isSending}
-        className={`text-xs transition-opacity ${isSending ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer opacity-100 hover:opacity-100'}`} 
+        className={`cb:text-xs cb:transition-opacity ${isSending ? 'cb:opacity-30 cb:cursor-not-allowed' : 'cb:cursor-pointer cb:opacity-100 cb:hover:opacity-100'}`} 
         title="Útil"
       >
         👍
@@ -48,7 +48,7 @@ export default function MessageFeedback({ appUrl, clientToken, conversationId })
       <button 
         onClick={() => sendFeedback('negative')} 
         disabled={isSending}
-        className={`text-xs transition-opacity ${isSending ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer opacity-100 hover:opacity-100'}`} 
+        className={`cb:text-xs cb:transition-opacity ${isSending ? 'cb:opacity-30 cb:cursor-not-allowed' : 'cb:cursor-pointer cb:opacity-100 cb:hover:opacity-100'}`} 
         title="Não foi útil"
       >
         👎

@@ -8,9 +8,9 @@ export default function ChatWidget({ appUrl, clientToken }) {
   const chat = useChatEngine(appUrl, clientToken);
 
   return (
-    <div className="fixed bottom-5 right-5 z-[999999] font-sans">
+    <div className="cb:fixed cb:bottom-5 cb:right-5 cb:z-[999999] cb:font-sans">
       {chat.isOpen ? (
-        <div className="flex flex-col w-[350px] h-[450px] bg-white rounded-xl shadow-2xl overflow-hidden mb-4 border border-slate-100">
+        <div className="cb:flex cb:flex-col cb:w-[350px] cb:h-[450px] cb:bg-white cb:rounded-xl cb:shadow-2xl cb:overflow-hidden cb:mb-4 cb:border cb:border-slate-100">
           <ChatHeader 
             currentStep={chat.currentStep} 
             onReset={chat.handleReset} 
@@ -38,7 +38,7 @@ export default function ChatWidget({ appUrl, clientToken }) {
       ) : (
         <div 
           onClick={() => chat.setIsOpen(true)} 
-          className="w-[60px] h-[60px] bg-blue-600 rounded-full flex items-center justify-center cursor-pointer shadow-xl hover:scale-105 transition-transform"
+          className="cb:w-[60px] cb:h-[60px] cb:bg-blue-600 cb:rounded-full cb:flex cb:items-center cb:justify-center cb:cursor-pointer cb:shadow-xl cb:hover:scale-105 cb:transition-transform"
         >
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>

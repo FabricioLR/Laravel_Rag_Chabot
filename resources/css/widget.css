@@ -1,8 +1,13 @@
-@import "tailwindcss";
+@import "tailwindcss" prefix(cb);
 
+/* Manually load the layers without global preflight base resets */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+
+/* Your Laravel / source configurations remain the same */
 @source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
 @source "../../storage/framework/views/*.php";
 @source "../views/**/*.blade.php";
-
 @source "../js/**/*.js";
 @source "../js/**/*.jsx";
