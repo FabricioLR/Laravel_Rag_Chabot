@@ -67,6 +67,11 @@ class OpenaiLLM implements LLM
             return [
                 'answer' => $response->choices[0]->message->content,
                 'duration' => $durationMs,
+                'model' => $model,
+                'temperature' => (float)$temperature,
+                'max_tokens' => (int)$maxOutputTokens,
+                'system_prompt' => $systemPrompt,
+                'compiled_prompt' => $prompt,
                 'total_tokens' => $totalTokens,
                 'tokens' => [
                     'prompt' => $promptTokens,

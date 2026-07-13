@@ -69,6 +69,11 @@ class Groq implements LLM
             return [
                 'answer' => $data['choices'][0]['message']['content'] ?? '',
                 'duration' => $duration,
+                'model' => $model,
+                'temperature' => (float)$temperature,
+                'max_tokens' => (int)$maxOutputTokens,
+                'system_prompt' => $systemPrompt,
+                'compiled_prompt' => $prompt,
                 'total_tokens' => $data['usage']['total_tokens'] ?? 0,
                 'tokens' => [
                     'prompt' => $data['usage']['prompt_tokens'] ?? 0,

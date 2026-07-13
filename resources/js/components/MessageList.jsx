@@ -75,7 +75,7 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
       {activeOptions.length > 0 && (
         <div className="cb:flex cb:flex-wrap cb:gap-2 cb:mt-2 cb:max-w-[90%] cb:self-start">
           {activeOptions.map((opt, i) => (
-            <button key={i} onClick={() => onOptionClick(opt.value ? opt.value : opt.name)} className="cb:cursor-pointer cb:bg-white cb:text-blue-600 cb:border cb:border-blue-600 cb:px-3 cb:py-1.5 cb:rounded-full cb:font-medium cb:text-xs cb:hover:bg-blue-600 cb:hover:text-white cb:transition-all">
+            <button key={i} onClick={() => onOptionClick(opt.value ? opt.value : opt.name)} className="cb:cursor-pointer cb:bg-white cb:text-blue-600 cb:border cb:border-blue-600 cb:px-3 cb:py-1.5 cb:rounded-full cb:font-medium  cb:hover:bg-blue-600 cb:hover:text-white cb:transition-all">
               {opt.name}
             </button>
           ))}

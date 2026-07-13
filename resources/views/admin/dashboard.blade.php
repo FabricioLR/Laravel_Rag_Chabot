@@ -178,9 +178,9 @@
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-xs font-mono text-gray-500 max-w-[140px]">
                                             <div class="flex items-center gap-2 group">
-                                                <span id="session-text-{{ $feedback->id }}" class="truncate cursor-pointer hover:text-indigo-600" title="Click to copy: {{ $feedback->session_id }}" onclick="copySessionId('{{ $feedback->session_id }}', this)">
+                                                <a href="{{ route('admin.details', $feedback->id) }}" class="truncate cursor-pointer text-indigo-600 hover:text-indigo-900 font-semibold hover:underline" title="View detailed LLM request & prompt parameters">
                                                     {{ $feedback->session_id }}
-                                                </span>
+                                                </a>
                                                 
                                                 <button type="button" 
                                                         onclick="copySessionId('{{ $feedback->session_id }}', this)" 
@@ -423,7 +423,7 @@
 
             function showFeedback(element) {
                 const container = element.closest('.flex');
-                const textNode = container.querySelector('span');
+                const textNode = container.querySelector('a');
                 const originalTitle = textNode.innerText;
 
                 textNode.innerText = 'Copied!';

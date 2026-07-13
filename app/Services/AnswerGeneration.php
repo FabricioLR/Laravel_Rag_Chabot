@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Log;
 use App\Services\LLM\LLMManager;
 use App\Services\Embedding\EmbeddingManager;
+use App\Models\GenerationTelemetry;
 use Exception;
 
 class AnswerGeneration
@@ -62,6 +63,28 @@ class AnswerGeneration
             ],
             'total_tokens' => $llmResult['total_tokens']
         ]);
+
+        try {
+            GenerationTelemetry::create([
+                'conversation_history_id' => $conversationId,
+                'model'                   => $llmResult['model'],
+                'temperature'             => $llmResult['temperature'],
+                'max_tokens'              => $llmResult['max_tokens'],
+                'main_category'           => $mainCategory,
+                'child_category'          => $childCategory,
+                'system_prompt'           => $llmResult['system_prompt'],
+                'compiled_prompt'         => $llmResult['compiled_prompt'],
+                'prompt_tokens'           => $llmResult['tokens']['prompt'] ?? 0,
+                'completion_tokens'       => $llmResult['tokens']['completion'] ?? 0,
+                'total_tokens'            => $llmResult['total_tokens'] ?? 0,
+                'llm_duration_ms'         => (int) $llmResult['duration'],
+                'embedding_duration_ms'   => (int) ($embeddingResult['duration'] ?? 0),
+                'database_duration_ms'    => (int) ($searchResult['duration'] ?? 0),
+                'total_duration_ms'       => (int) $totalDuration,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed logging LLM generation metrics to DB: ' . $e->getMessage());
+        }
 
         return ['answer' => $llmResult['answer'], 'conversationId' => $conversationId];
     }

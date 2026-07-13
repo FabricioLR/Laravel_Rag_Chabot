@@ -9,6 +9,7 @@ use App\Models\AllowedDomain;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\ConversationHistory;
 use Throwable;
 
 class DashboardController extends Controller
@@ -48,6 +49,13 @@ class DashboardController extends Controller
                 'feedbacks' => []
             ]));
         }
+    }
+
+    public function details($id)
+    {
+        $conversation = ConversationHistory::with('telemetry')->findOrFail($id);
+
+        return view('admin.details', compact('conversation'));
     }
 
     public function storeDomain(Request $request): RedirectResponse

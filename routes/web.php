@@ -23,4 +23,6 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::post('/domains', [DashboardController::class, 'storeDomain'])->name('admin.domains.store');
     Route::delete('/domains/{id}', [DashboardController::class, 'deleteDomain'])->name('admin.domains.delete');
+
+    Route::get('/details/{id}', [DashboardController::class, 'details'])->name('admin.details');
 });
