@@ -1,7 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import ChatWidget from './components/ChatWidget';
-import '../css/widget.css';
+//import '../css/widget.css';
+import widgetStyles from '../css/widget.css?inline';
 
 (function () {
     const initScript = document.getElementById('chatbot-initializer');
@@ -27,12 +28,16 @@ import '../css/widget.css';
 
     const reactRootTarget = document.createElement('div');
     reactRootTarget.id = 'chat-widget-react-root';
-    
-    const linkElement = document.createElement('link');
-    linkElement.rel = 'stylesheet';
-    linkElement.href = `${appUrl}/build/widget.css`;
 
-    shadowRoot.appendChild(linkElement);
+    const styleElement = document.createElement('style');
+    styleElement.textContent = widgetStyles;
+
+    //const linkElement = document.createElement('link');
+    //linkElement.rel = 'stylesheet';
+    //linkElement.href = `${appUrl}/build/widget.css`;
+
+    //shadowRoot.appendChild(linkElement);
+    shadowRoot.appendChild(styleElement);
     shadowRoot.appendChild(reactRootTarget);
 
     const root = createRoot(reactRootTarget);

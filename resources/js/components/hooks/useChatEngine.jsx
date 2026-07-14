@@ -1,7 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 
 const SESSION_EXPIRATION_MS = 10 * 60 * 1000;
-const INITIAL_MESSAGE = "Qual categoria principal você tem interesse?";
+
+const CHAT_STRINGS = {
+  INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Para começarmos, selecione o módulo que você deseja consultar:",
+  GERAL_SELECTED: "Você selecionou a categoria Geral. O que você gostaria de saber?",
+  INVALID_CATEGORY_ERROR: "Por favor, use os botões fornecidos para escolher uma categoria válida.",
+  FILTERS_APPLIED: "Perfeito! Filtros aplicados para focar na sua escolha. Como posso te ajudar hoje?",
+  PROCESS_ERROR: "Desculpe, não consegui processar.",
+  CONNECTION_ERROR: "Desculpe, estou com problemas para me conectar no momento.",
+  INPUT_PLACEHOLDER_ACTIVE: "Digite uma mensagem...",
+  INPUT_PLACEHOLDER_DISABLED: "Selecione uma opção acima...",
+  
+  SUBCATEGORY_PROMPT: (categoryName) => `Combinado! O que você precisa resolver em **${categoryName}**? Selecione uma das opções:`
+};
+
+const formatCategoryOption = (cat) => {
+  const rawValue = typeof cat === 'string' ? cat : (cat.value || cat.name || '');
+  
+  let cleanName = rawValue;
+  if (cleanName !== 'Geral' && cleanName !== 'Tentar novamente') {
+    cleanName = rawValue.replace(/^[\d\s-]+/, '');
+    cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+  }
+  
+  return { name: cleanName, value: rawValue };
+};
 
 export function useChatEngine(appUrl, clientToken) {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,7 +40,9 @@ export function useChatEngine(appUrl, clientToken) {
   const lastUserMessageRef = useRef('');
 
   const isInputDisabled = currentStep !== 'completed' || isLoading;
-  const inputPlaceholder = currentStep === 'completed' ? "Digite uma mensagem..." : "Selecione uma opção acima...";
+  const inputPlaceholder = currentStep === 'completed' 
+    ? CHAT_STRINGS.INPUT_PLACEHOLDER_ACTIVE 
+    : CHAT_STRINGS.INPUT_PLACEHOLDER_DISABLED;
 
   const clearChatSessionData = () => {
     localStorage.removeItem('chat_widget_session');
@@ -81,8 +107,10 @@ export function useChatEngine(appUrl, clientToken) {
       const categoriesData = await categoriesRes.json();
 
       updateState('awaiting_main');
-      setMessages([...formattedHistory, { text: INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
-      setActiveOptions([{ name: 'Geral' }, ...categoriesData.categories]);
+      setMessages([...formattedHistory, { text: CHAT_STRINGS.INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
+
+      const formattedMainCategories = (categoriesData.categories || []).map(formatCategoryOption);
+      setActiveOptions([{ name: 'Geral', value: 'Geral' }, ...formattedMainCategories]);
     } catch (error) {
       console.error("Initialization failed:", error);
     }
@@ -100,13 +128,13 @@ export function useChatEngine(appUrl, clientToken) {
       setActiveOptions([]);
       if (text === 'Geral') {
         updateState('completed', { main: 'Geral', child: 'Geral' });
-        setMessages(prev => [...prev, { text: "Você selecionou Geral. O que você gostaria de saber?", sender: 'bot', isApi: false }]);
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.GERAL_SELECTED, sender: 'bot', isApi: false }]);
         return;
       }
 
-      const prefix = text.match(/^([0-9]+)\s*-/)?.[1];
+      const prefix = text.match(/^([0-9]+)/)?.[1];
       if (!prefix) {
-        setMessages(prev => [...prev, { text: "Por favor, use os botões fornecidos para escolher uma categoria válida.", sender: 'bot', isApi: false }]);
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.INVALID_CATEGORY_ERROR, sender: 'bot', isApi: false }]);
         return;
       }
 
@@ -116,8 +144,12 @@ export function useChatEngine(appUrl, clientToken) {
         });
         const data = await res.json();
         updateState('awaiting_child', { main: text, child: null });
-        setMessages(prev => [...prev, { text: `Entendido! Selecione uma subcategoria específica em '${text}':`, sender: 'bot', isApi: false }]);
-        setActiveOptions([{ name: 'Geral' }, ...data.categories]);
+
+        const cleanMainName = formatCategoryOption(text).name;
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.SUBCATEGORY_PROMPT(cleanMainName), sender: 'bot', isApi: false }]);
+        
+        const formattedChildCategories = (data.categories || []).map(formatCategoryOption);
+        setActiveOptions([{ name: 'Geral', value: 'Geral' }, ...formattedChildCategories]);
       } catch (err) {
         console.error(err);
       }
@@ -127,7 +159,7 @@ export function useChatEngine(appUrl, clientToken) {
     if (currentStep === 'awaiting_child') {
       setActiveOptions([]);
       updateState('completed', { main: activeFilters.main, child: text });
-      setMessages(prev => [...prev, { text: `Perfeito! Filtros aplicados para focar na sua escolha. Como posso te ajudar hoje?`, sender: 'bot', isApi: false }]);
+      setMessages(prev => [...prev, { text: CHAT_STRINGS.FILTERS_APPLIED, sender: 'bot', isApi: false }]);
       return;
     }
 
@@ -149,14 +181,13 @@ export function useChatEngine(appUrl, clientToken) {
         });
         const data = await response.json();
         if (!data.answer){
-          setMessages(prev => [...prev, { text: "Desculpe, não consegui processar.", sender: 'bot', isApi: false }]);
+          setMessages(prev => [...prev, { text: CHAT_STRINGS.PROCESS_ERROR, sender: 'bot', isApi: false }]);
           setActiveOptions([{ name: 'Tentar novamente', value: text }]);
         } else {
           setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer, sender: 'bot', isApi: true }]);
         }
       } catch (error) {
-        setMessages(prev => [...prev, { text: "Desculpe, estou com problemas para me conectar no momento.", sender: 'bot', isApi: false }]);
-        
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.CONNECTION_ERROR, sender: 'bot', isApi: false }]);
         setActiveOptions([{ name: 'Tentar novamente', value: text }]);
       } finally {
         setIsLoading(false);
@@ -164,15 +195,17 @@ export function useChatEngine(appUrl, clientToken) {
     }
   };
 
-  const handleSendMessage = async (overrideText = null) => {
-    const text = overrideText || inputValue.trim();
-    if (!text) return;
+  const handleSendMessage = async (overrideValue = null, overrideLabel = null) => {
+    const rawValue = overrideValue || inputValue.trim();
+    if (!rawValue) return;
     
-    setMessages(prev => [...prev, { text, sender: 'user', isApi: false }]);
+    const displayLabel = overrideLabel || formatCategoryOption(rawValue).name;
 
-    if (!overrideText) setInputValue('');
+    setMessages(prev => [...prev, { text: displayLabel, sender: 'user', isApi: false }]);
 
-    await runStateEngine(text);
+    if (!overrideValue) setInputValue('');
+
+    await runStateEngine(rawValue);
   };
 
   const handleReset = () => {
