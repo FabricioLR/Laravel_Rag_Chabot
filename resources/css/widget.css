@@ -1,11 +1,45 @@
 @import "tailwindcss" prefix(cb);
 
-/* Manually load the layers without global preflight base resets */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme" layer(theme);
 @import "tailwindcss/utilities" layer(utilities);
 
-/* Your Laravel / source configurations remain the same */
+@layer base {
+  :host {
+    font-size: 16px !important;
+
+    --cb-spacing: 0.25em !important;
+    --cb-text-xs: 0.75em !important;
+    --cb-text-sm: 0.875em !important;
+    --cb-text-xl: 1.25em !important;
+    --cb-radius-md: 0.375em !important;
+    --cb-radius-lg: 0.5em !important;
+    --cb-radius-xl: 0.75em !important;
+    --cb-radius-2xl: 1em !important;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  :host, *, ::before, ::after {
+    box-sizing: border-box !important;
+
+    /* Base Shadow Variables */
+    --tw-shadow-colored: 0 0 #0000 !important;
+    --tw-inset-shadow: 0 0 #0000 !important;
+    --tw-inset-shadow-colored: 0 0 #0000 !important;
+
+    --tw-shadow-color: initial !important;
+
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-inset-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-color: initial !important;
+    --tw-ring-color: initial !important;
+  }
+}
+
 @source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
 @source "../../storage/framework/views/*.php";
 @source "../views/**/*.blade.php";
