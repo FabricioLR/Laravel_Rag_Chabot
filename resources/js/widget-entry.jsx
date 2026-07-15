@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import ChatWidget from './components/ChatWidget';
-//import '../css/widget.css';
 import widgetStyles from '../css/widget.css?inline';
 
 (function () {
@@ -32,11 +31,6 @@ import widgetStyles from '../css/widget.css?inline';
     const styleElement = document.createElement('style');
     styleElement.textContent = widgetStyles;
 
-    //const linkElement = document.createElement('link');
-    //linkElement.rel = 'stylesheet';
-    //linkElement.href = `${appUrl}/build/widget.css`;
-
-    //shadowRoot.appendChild(linkElement);
     shadowRoot.appendChild(styleElement);
     shadowRoot.appendChild(reactRootTarget);
 

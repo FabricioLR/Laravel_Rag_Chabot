@@ -5,6 +5,10 @@
 @import "tailwindcss/utilities" layer(utilities);
 
 @layer base {
+  a {
+    @apply cb:text-blue-600 cb:hover:text-blue-800 cb:font-medium;
+  }
+
   :host {
     font-size: 16px !important;
 
@@ -16,6 +20,8 @@
     --cb-radius-lg: 0.5em !important;
     --cb-radius-xl: 0.75em !important;
     --cb-radius-2xl: 1em !important;
+
+    --tw-border-style: solid;
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

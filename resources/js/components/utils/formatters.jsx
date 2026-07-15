@@ -8,12 +8,12 @@ export function formatBotResponse(rawText) {
   }
 
   formatted = formatted.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (match, text, url) => {
-    return `<a href="${url.replace(/\\/g, '')}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">${text}</a>`;
+    return `<a href="${url.replace(/\\/g, '')}" target="_blank" rel="noopener noreferrer" class="cb:text-indigo-600 cb:hover:underline cb:font-medium">${text}</a>`;
   });
 
   formatted = formatted.replace(/<(https?:\/\/[^>]+)>/g, (match, url) => {
     const cleanUrl = url.replace(/\\/g, '');
-    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">${cleanUrl}</a>`;
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="cb:text-indigo-600 cb:hover:underline cb:font-medium">${cleanUrl}</a>`;
   });
 
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-const SESSION_EXPIRATION_MS = 10 * 60 * 1000;
+const SESSION_EXPIRATION_MS = 45 * 60 * 1000;
 
 const CHAT_STRINGS = {
   INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Para começarmos, selecione o módulo que você deseja consultar:",
@@ -122,7 +122,7 @@ export function useChatEngine(appUrl, clientToken) {
 
     try {
       setActiveOptions([]);
-      const response = await fetch(`${appUrl}/api/chat2`, {
+      const response = await fetch(`${appUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json', 'X-Client-Token': clientToken },
         body: JSON.stringify({
