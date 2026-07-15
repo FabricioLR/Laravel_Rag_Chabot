@@ -11,6 +11,7 @@ const CHAT_STRINGS = {
   CONNECTION_ERROR: "Desculpe, estou com problemas para me conectar no momento.",
   INPUT_PLACEHOLDER_ACTIVE: "Digite uma mensagem...",
   INPUT_PLACEHOLDER_DISABLED: "Selecione uma opção acima...",
+  DEFAULT_CATEGORY_NOTICE: "Como você enviou uma pergunta direta, prosseguiremos utilizando a categoria **Geral**.",
   
   SUBCATEGORY_PROMPT: (categoryName) => `Combinado! O que você precisa resolver em **${categoryName}**? Selecione uma das opções:`
 };
@@ -39,10 +40,8 @@ export function useChatEngine(appUrl, clientToken) {
   
   const lastUserMessageRef = useRef('');
 
-  const isInputDisabled = currentStep !== 'completed' || isLoading;
-  const inputPlaceholder = currentStep === 'completed' 
-    ? CHAT_STRINGS.INPUT_PLACEHOLDER_ACTIVE 
-    : CHAT_STRINGS.INPUT_PLACEHOLDER_DISABLED;
+  const isInputDisabled = isLoading;
+  const inputPlaceholder = CHAT_STRINGS.INPUT_PLACEHOLDER_ACTIVE;
 
   const clearChatSessionData = () => {
     localStorage.removeItem('chat_widget_session');
@@ -116,12 +115,53 @@ export function useChatEngine(appUrl, clientToken) {
     }
   };
 
+  // Helper method to send text directly to the API endpoint
+  const sendApiMessage = async (text, mainCat, childCat) => {
+    setIsLoading(true);
+    lastUserMessageRef.current = text; 
+
+    try {
+      setActiveOptions([]);
+      const response = await fetch(`${appUrl}/api/chat2`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json', 'X-Client-Token': clientToken },
+        body: JSON.stringify({
+          chatInput: text,
+          sessionId,
+          mainCategory: mainCat,
+          childCategory: childCat
+        })
+      });
+      const data = await response.json();
+      if (!data.answer){
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.PROCESS_ERROR, sender: 'bot', isApi: false }]);
+        setActiveOptions([{ name: 'Tentar novamente', value: text }]);
+      } else {
+        setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer, sender: 'bot', isApi: true }]);
+      }
+    } catch (error) {
+      setMessages(prev => [...prev, { text: CHAT_STRINGS.CONNECTION_ERROR, sender: 'bot', isApi: false }]);
+      setActiveOptions([{ name: 'Tentar novamente', value: text }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const runStateEngine = async (text) => {
     localStorage.setItem('chat_widget_session_timestamp', Date.now().toString());
 
     if (text === 'Tentar novamente') {
       setActiveOptions([]);
       text = lastUserMessageRef.current; 
+    }
+
+    const isOptionSelected = activeOptions.some(opt => opt.value === text);
+
+    if (!isOptionSelected && currentStep !== 'completed') {
+      updateState('completed', { main: 'Geral', child: 'Geral' });
+      setMessages(prev => [...prev, { text: CHAT_STRINGS.DEFAULT_CATEGORY_NOTICE, sender: 'bot', isApi: false }]);
+      await sendApiMessage(text, 'Geral', 'Geral');
+      return;
     }
 
     if (currentStep === 'awaiting_main') {
@@ -164,48 +204,26 @@ export function useChatEngine(appUrl, clientToken) {
     }
 
     if (currentStep === 'completed') {
-      setIsLoading(true);
-      lastUserMessageRef.current = text; 
-
-      try {
-        setActiveOptions([]);
-        const response = await fetch(`${appUrl}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json', 'X-Client-Token': clientToken },
-          body: JSON.stringify({
-            chatInput: text,
-            sessionId,
-            mainCategory: activeFilters.main,
-            childCategory: activeFilters.child
-          })
-        });
-        const data = await response.json();
-        if (!data.answer){
-          setMessages(prev => [...prev, { text: CHAT_STRINGS.PROCESS_ERROR, sender: 'bot', isApi: false }]);
-          setActiveOptions([{ name: 'Tentar novamente', value: text }]);
-        } else {
-          setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer, sender: 'bot', isApi: true }]);
-        }
-      } catch (error) {
-        setMessages(prev => [...prev, { text: CHAT_STRINGS.CONNECTION_ERROR, sender: 'bot', isApi: false }]);
-        setActiveOptions([{ name: 'Tentar novamente', value: text }]);
-      } finally {
-        setIsLoading(false);
-      }
+      await sendApiMessage(text, activeFilters.main, activeFilters.child);
     }
   };
 
-  const handleSendMessage = async (overrideValue = null, overrideLabel = null) => {
-    const rawValue = overrideValue || inputValue.trim();
-    if (!rawValue) return;
-    
-    const displayLabel = overrideLabel || formatCategoryOption(rawValue).name;
+  const handleSendMessage = async (type, overrideValue = null, overrideLabel = null) => {
+    if (type == "option"){
+      console.log(overrideValue, overrideLabel, inputValue)
+      setMessages(prev => [...prev, { text: formatCategoryOption(overrideLabel).name, sender: 'user', isApi: false }]);
+      await runStateEngine(overrideValue);
+    } else if (type == "question"){
+      console.log(overrideValue, overrideLabel, inputValue)
+      setMessages(prev => [...prev, { text: inputValue, sender: 'user', isApi: false }]);
+      setInputValue('');
+      await runStateEngine(inputValue);
+    } else if (type == "try-again"){
+      setMessages(prev => [...prev, { text: overrideValue, sender: 'user', isApi: false }]);
+      await runStateEngine(overrideLabel);
+    }
 
-    setMessages(prev => [...prev, { text: displayLabel, sender: 'user', isApi: false }]);
-
-    if (!overrideValue) setInputValue('');
-
-    await runStateEngine(rawValue);
+    return;
   };
 
   const handleReset = () => {

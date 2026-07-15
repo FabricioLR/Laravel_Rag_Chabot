@@ -3,7 +3,7 @@ import React from 'react';
 export default function ChatForm({ inputValue, setInputValue, isDisabled, placeholder, onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit();
+    onSubmit("question");
   };
 
   return (
@@ -19,7 +19,7 @@ export default function ChatForm({ inputValue, setInputValue, isDisabled, placeh
       />
       <button 
         type="submit" 
-        disabled={isDisabled || !inputValue.trim()} 
+        disabled={isDisabled} 
         className="cb:cursor-pointer cb:bg-[#0054a6] cb:text-white cb:px-4 cb:py-2.5 cb:rounded-lg cb:font-medium cb:disabled:cursor-not-allowed cb:disabled:bg-slate-200 cb:disabled:text-slate-400 cb:text-sm cb:hover:bg-[#004285] cb:transition-colors"
       >
         Enviar

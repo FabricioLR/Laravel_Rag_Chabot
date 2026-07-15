@@ -81,7 +81,7 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
           {activeOptions.map((opt, i) => (
             <button 
               key={i} 
-              onClick={() => onOptionClick(opt.value, opt.name)} 
+              onClick={() => onOptionClick(opt.name != "Tentar novamente" ? "option" : "try-again", opt.value, opt.name)} 
               className="cb:cursor-pointer cb:bg-[#e2edf8] cb:text-[#004b93] cb:border cb:border-[#c9dfef] cb:px-3 cb:py-1.5 cb:rounded-lg cb:text-xs cb:font-semibold cb:uppercase cb:tracking-wider cb:hover:bg-[#0054a6] cb:hover:text-white cb:hover:border-[#0054a6] cb:transition-all cb:shadow-sm"
             >
               {opt.name}

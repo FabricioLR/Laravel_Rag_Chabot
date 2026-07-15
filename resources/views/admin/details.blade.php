@@ -7,7 +7,6 @@
 </head>
 <body class="bg-gray-50 py-12 px-6">
     <div class="max-w-5xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <!-- Header -->
         <div class="px-8 py-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">LLM Generation Details</h1>
