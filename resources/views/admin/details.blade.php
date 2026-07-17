@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <title>LLM Generation Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #telemetry-container:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: #111827 !important;
+            max-width: none !important;
+        }
+
+        #telemetry-container:fullscreen #telemetry-box {
+            height: 100vh !important;
+            max-height: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 2.5rem !important;
+            overflow-y: auto !important;
+        }
+
+        #telemetry-container:fullscreen #telemetry-box .flex-1 {
+            font-size: 0.875rem !important;
+            line-height: 1.625 !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 py-12 px-6">
     <div class="max-w-5xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -92,12 +114,25 @@
             <hr class="border-gray-100">
 
             <div class="space-y-6">
-
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">Compiled Agent Prompt Execution</h3>
-                    <div class="bg-gray-900 text-gray-100 text-xs font-mono p-4 rounded-lg border border-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                        {{ $conversation->telemetry->compiled_prompt }}
-                        {{ $conversation->answer }}
+                    <div id="telemetry-container" class="relative group">
+                        <button 
+                            onclick="toggleTelemetryFullscreen()" 
+                            class="absolute top-4 right-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded border border-gray-700 transition opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Toggle Full Screen"
+                        >
+                            <svg id="fullscreen-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                            </svg>
+                        </button>
+
+                        <div id="telemetry-box" class="flex flex-col bg-gray-900 text-gray-100 text-xs font-mono p-4 rounded-lg border border-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+                            <div class="flex-1">
+                                {{ $conversation->telemetry->compiled_prompt }}
+                                {{ $conversation->answer }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -108,5 +143,28 @@
         </div>
         @endif
     </div>
+
+    <script>
+        function toggleTelemetryFullscreen() {
+            const container = document.getElementById('telemetry-container');
+            const icon = document.getElementById('fullscreen-icon');
+
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    alert(`Error entering full-screen: ${err.message}`);
+                });
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5M15 9h4.5M15 9l6-6M9 15v4.5M9 15H4.5M9 15l-6 6m12-5v4.5M15 15h4.5M15 15l6 6" />';
+            } else {
+                document.exitFullscreen();
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.getElementById('fullscreen-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />';
+            }
+        });
+    </script>
 </body>
 </html>
