@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatRequest;
 use App\Http\Requests\FeedbackRequest;
 use App\Services\AnswerGeneration;
-use App\Services\PostCategories;
+use App\Services\Category;
 use App\Services\ConversationHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +18,7 @@ class ChatController extends Controller
 
     public function __construct(
         protected AnswerGeneration $pipelineService,
-        protected PostCategories $categoryService,
+        protected Category $categoryService,
         protected DomainManager $domainManager,
         protected ConversationHistory $historyService
     ) {}

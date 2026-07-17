@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class PostCategories
+class Category
 {
     /**
      * Fetch active categories from the WordPress MySQL instance.
@@ -52,6 +52,44 @@ class PostCategories
             ]);
             
             return [];
+        }
+    }
+
+    public function getFormatedChildCategories(string $mainCategory, ?string $childCategory = null): string{
+        try {
+            $wpTablePrefix = config('database.connections.wordpress.prefix', env('WP_DB_TABLE_PREFIX', 'wp_'));
+
+            $filter = "";
+            if ($childCategory) {
+                $mainCode = trim(explode('-', $mainCategory)[0]);
+                $childCode = trim(explode('-', $childCategory)[1]);
+                $filter = "AND t.name LIKE '{$mainCode}.{$childCode}.%'";
+            } elseif ($mainCategory) {
+                $mainCode = trim(explode('-', $mainCategory)[0]);
+                $filter = "AND t.name LIKE '{$mainCode}.%'";
+            }
+
+            $categories = DB::connection('wordpress')->select("
+                SELECT t.name
+                FROM {$wpTablePrefix}terms t
+                INNER JOIN {$wpTablePrefix}term_taxonomy tt ON t.term_id = tt.term_id
+                WHERE tt.taxonomy = 'category'
+                {$filter}
+                ORDER BY t.name ASC
+            ");
+
+            $formated = "";
+            foreach ($categories as $item) {
+                $formated .= $item->name . "\n";
+            }
+            
+            return $formated;
+        } catch (Exception $e) {
+            Log::error('Failed to retrieve WordPress child categories.', [
+                'message' => $e->getMessage()
+            ]);
+            
+            return "";
         }
     }
 }

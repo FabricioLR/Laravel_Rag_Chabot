@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 const SESSION_EXPIRATION_MS = 45 * 60 * 1000;
 
 const CHAT_STRINGS = {
-  INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Para começarmos, selecione o módulo que você deseja consultar:",
+  INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Como posso te ajudar hoje?",
+  TOGGLE_BUTTON_LABEL: "Filtrar por módulo (opcional)",
   GERAL_SELECTED: "Você selecionou a categoria Geral. O que você gostaria de saber?",
   INVALID_CATEGORY_ERROR: "Por favor, use os botões fornecidos para escolher uma categoria válida.",
   FILTERS_APPLIED: "Perfeito! Filtros aplicados para focar na sua escolha. Como posso te ajudar hoje?",
@@ -23,6 +24,8 @@ const formatCategoryOption = (cat) => {
   if (cleanName !== 'Geral' && cleanName !== 'Tentar novamente') {
     cleanName = rawValue.replace(/^[\d\s-]+/, '');
     cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    
+    return { name: cleanName, value: rawValue, type: "option" };
   }
   
   return { name: cleanName, value: rawValue };
@@ -99,17 +102,8 @@ export function useChatEngine(appUrl, clientToken) {
         sender: msg.sender,
         isApi: msg.sender === 'bot'
       }));
-
-      const categoriesRes = await fetch(`${appUrl}/api/chat/categories`, {
-        headers: { 'X-Client-Token': clientToken, 'Accept': 'application/json', 'Content-Type': 'application/json; charset=UTF-8' }
-      });
-      const categoriesData = await categoriesRes.json();
-
-      updateState('awaiting_main');
       setMessages([...formattedHistory, { text: CHAT_STRINGS.INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
-
-      const formattedMainCategories = (categoriesData.categories || []).map(formatCategoryOption);
-      setActiveOptions([{ name: 'Geral', value: 'Geral' }, ...formattedMainCategories]);
+      setActiveOptions([{ name: 'Filtrar por módulo', value: 'Filtrar por módulo', type: "categories" }]);
     } catch (error) {
       console.error("Initialization failed:", error);
     }
@@ -122,7 +116,7 @@ export function useChatEngine(appUrl, clientToken) {
 
     try {
       setActiveOptions([]);
-      const response = await fetch(`${appUrl}/api/chat`, {
+      const response = await fetch(`${appUrl}/api/chat2`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=UTF-8', 'Accept': 'application/json', 'X-Client-Token': clientToken },
         body: JSON.stringify({
@@ -135,13 +129,13 @@ export function useChatEngine(appUrl, clientToken) {
       const data = await response.json();
       if (!data.answer){
         setMessages(prev => [...prev, { text: CHAT_STRINGS.PROCESS_ERROR, sender: 'bot', isApi: false }]);
-        setActiveOptions([{ name: 'Tentar novamente', value: text }]);
+        setActiveOptions([{ name: 'Tentar novamente', value: text, type: "try-again" }]);
       } else {
         setMessages(prev => [...prev, { id: data.conversationId, feedback: null, text: data.answer, sender: 'bot', isApi: true }]);
       }
     } catch (error) {
       setMessages(prev => [...prev, { text: CHAT_STRINGS.CONNECTION_ERROR, sender: 'bot', isApi: false }]);
-      setActiveOptions([{ name: 'Tentar novamente', value: text }]);
+      setActiveOptions([{ name: 'Tentar novamente', value: text, type: "try-again" }]);
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +183,7 @@ export function useChatEngine(appUrl, clientToken) {
         setMessages(prev => [...prev, { text: CHAT_STRINGS.SUBCATEGORY_PROMPT(cleanMainName), sender: 'bot', isApi: false }]);
         
         const formattedChildCategories = (data.categories || []).map(formatCategoryOption);
-        setActiveOptions([{ name: 'Geral', value: 'Geral' }, ...formattedChildCategories]);
+        setActiveOptions([{ name: 'Geral', value: 'Geral', type: "option" }, ...formattedChildCategories]);
       } catch (err) {
         console.error(err);
       }
@@ -210,17 +204,34 @@ export function useChatEngine(appUrl, clientToken) {
 
   const handleSendMessage = async (type, overrideValue = null, overrideLabel = null) => {
     if (type == "option"){
-      console.log(overrideValue, overrideLabel, inputValue)
       setMessages(prev => [...prev, { text: formatCategoryOption(overrideLabel).name, sender: 'user', isApi: false }]);
       await runStateEngine(overrideValue);
     } else if (type == "question"){
-      console.log(overrideValue, overrideLabel, inputValue)
+      if (!inputValue) return;
       setMessages(prev => [...prev, { text: inputValue, sender: 'user', isApi: false }]);
       setInputValue('');
       await runStateEngine(inputValue);
     } else if (type == "try-again"){
       setMessages(prev => [...prev, { text: overrideValue, sender: 'user', isApi: false }]);
       await runStateEngine(overrideLabel);
+    } else if (type == "categories"){
+      setActiveOptions([])
+      setMessages(prev => [...prev, { text: "Selecione o módulo que você deseja consultar:", sender: 'bot', isApi: false }]);
+      setIsLoading(true);
+      try{
+        const categoriesRes = await fetch(`${appUrl}/api/chat/categories`, {
+          headers: { 'X-Client-Token': clientToken, 'Accept': 'application/json', 'Content-Type': 'application/json; charset=UTF-8' }
+        });
+        const categoriesData = await categoriesRes.json();
+        updateState('awaiting_main');
+        const formattedMainCategories = (categoriesData.categories || []).map(formatCategoryOption);
+        setActiveOptions([{ name: 'Geral', value: 'Geral', type: "option" }, ...formattedMainCategories]);
+      } catch (error) {
+        setMessages(prev => [...prev, { text: CHAT_STRINGS.CONNECTION_ERROR, sender: 'bot', isApi: false }]);
+        handleReset()
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     return;
