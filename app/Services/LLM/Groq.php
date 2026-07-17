@@ -9,7 +9,7 @@ use Exception;
 
 class Groq implements LLM
 {
-    public function generateAnswer(string $userInput, string $sessionId, string $context, string $conversationHistory): array
+    public function generateAnswer(string $prompt, $systemPrompt, string $sessionId): array
     {
         try{
             $startTime = microtime(true);
@@ -17,29 +17,6 @@ class Groq implements LLM
             $model = config('services.groq.llm_model', env('GROQ_LLM_MODEL', 'llama-3.1-8b-instant'));
             $temperature = config('services.groq.llm_model_temperature', env('GROQ_LLM_MODEL_TEMPERATURE', 0.1));
             $maxOutputTokens = config('services.groq.llm_model_max_output_tokens', env('GROQ_LLM_MODEL_MAX_OUTPUT_TOKENS', 1024));
-
-            $systemPrompt = config('services.llm.system_prompt', env('LLM_SYSTEM_PROMPT', ''));
-
-            if (empty($systemPrompt)){
-                throw new Exception("LLM System Prompt must be provided.");
-            }
-            
-            $prompt = "# [HISTÓRICO DA CONVERSA]\n" .
-                "Abaixo está o histórico das últimas interações para lhe dar contexto do que foi discutido:\n\n" .
-                $conversationHistory . "\n" .
-                "---\n\n" .
-                "# [CONTEXTO RECUPERADO]\n" .
-                $context . "\n" .
-                "---\n\n" .
-                "# [PERGUNTA ATUAL DO USUÁRIO]\n" .
-                $userInput . "\n\n" .
-                "---\n\n" .
-                "# [RESPOSTA DO ASSISTENTE]\n";
-
-            Log::debug("Full string context compiled for LLM request.", [
-                'session_id' => $sessionId,
-                'full_user_prompt' => $prompt
-            ]);
 
             $response = Http::withToken($apiKey)
                 ->post('https://api.groq.com/openai/v1/chat/completions', [

@@ -109,7 +109,6 @@ export function useChatEngine(appUrl, clientToken) {
     }
   };
 
-  // Helper method to send text directly to the API endpoint
   const sendApiMessage = async (text, mainCat, childCat) => {
     setIsLoading(true);
     lastUserMessageRef.current = text; 

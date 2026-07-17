@@ -96,6 +96,13 @@ class Knowledge
                 'main_category' => $mainCategory,
                 'child_category' => $childCategory
             ]);
+
+            if ($mainCategory == null && $childCategory == null){
+                return [
+                    'context' => "Nada relacionado foi encontrado.",
+                    'duration' => $duration
+                ];    
+            }
             
             return [
                 'context' => "",
