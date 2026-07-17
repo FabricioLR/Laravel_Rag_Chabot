@@ -356,8 +356,7 @@
 
                 title.innerText = `Integration Script for ${name}`;
 
-                codeBlock.innerText = `<link rel="stylesheet" href="${appUrl}/build/widget.css">\n` +    
-                                    `<script\n` +
+                codeBlock.innerText = `<script\n` +
                                     `    id="chatbot-initializer"\n` +
                                     `    src="${appUrl}/build/widget.js"\n` +
                                     `    data-app-url="${appUrl}"\n` +
