@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\ConversationHistory as ConversationHistoryModel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
+use App\Exceptions\SessionExpiredException;
+use Carbon\Carbon;
 
 class ConversationHistory
 {
@@ -49,6 +51,20 @@ class ConversationHistory
 
     public function getMessagesForWidget(string $sessionId): Collection
     {
+        $expirationMinutes = (int) config('api.session.expiration_minutes', env('SESSION_EXPIRATION_MINUTES', 45));
+
+        $lastInteraction = ConversationHistoryModel::where('session_id', $sessionId)
+            ->latest('updated_at')
+            ->first();
+
+        if ($lastInteraction) {
+            $lastActiveTime = Carbon::parse($lastInteraction->updated_at);
+            
+            if ($lastActiveTime->diffInMinutes(now()) >= $expirationMinutes) {
+                throw new SessionExpiredException('Session has expired due to inactivity.');
+            }
+        }
+
         $interactions = ConversationHistoryModel::where('session_id', $sessionId)
             ->orderBy('id', 'asc')
             ->limit(5)
@@ -59,14 +75,14 @@ class ConversationHistory
         foreach ($interactions as $interaction) {
             $messages->push([
                 'id'       => $interaction->id,
-                'feedback' => $interaction->feedback,
+                'feedback' => $interaction->feedback ?? null,
                 'text'     => $interaction->question,
                 'sender'   => 'user'
             ]);
 
             $messages->push([
                 'id'       => $interaction->id,
-                'feedback' => $interaction->feedback,
+                'feedback' => $interaction->feedback ?? null,
                 'text'     => $interaction->answer,
                 'sender'   => 'bot'
             ]);

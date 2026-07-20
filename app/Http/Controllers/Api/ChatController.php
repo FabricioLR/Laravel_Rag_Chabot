@@ -11,6 +11,7 @@ use App\Services\ConversationHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\DomainManager;
+use App\Exceptions\SessionExpiredException;
 use Exception;
 
 class ChatController extends Controller
@@ -55,6 +56,10 @@ class ChatController extends Controller
             return response()->json([
                 'messages' => $messages
             ], 200)->header('Content-Type', 'application/json; charset=utf-8');
+        } catch (SessionExpiredException $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 401)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
-const SESSION_EXPIRATION_MS = 45 * 60 * 1000;
+const minutes = Number(import.meta.env.VITE_SESSION_EXPIRATION_MINUTES) || 45;
+const SESSION_EXPIRATION_MS = minutes * 60 * 1000;
 
 const CHAT_STRINGS = {
   INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Como posso te ajudar hoje?",
@@ -93,6 +94,11 @@ export function useChatEngine(appUrl, clientToken) {
       const historyRes = await fetch(`${appUrl}/api/chat/history/${sessionId}`, {
         headers: { 'Accept': 'application/json', 'X-Client-Token': clientToken, 'Content-Type': 'application/json; charset=UTF-8' }
       });
+
+      if (historyRes.status === 401 || !historyRes.ok) {
+        throw new Error(`Session expired or invalid (Status: ${historyRes.status})`);
+      }
+      
       const historyData = historyRes.ok ? await historyRes.json() : { messages: [] };
       
       const formattedHistory = (historyData.messages || []).map(msg => ({
@@ -105,7 +111,11 @@ export function useChatEngine(appUrl, clientToken) {
       setMessages([...formattedHistory, { text: CHAT_STRINGS.INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
       setActiveOptions([{ name: 'Filtrar por módulo', value: 'Filtrar por módulo', type: "categories" }]);
     } catch (error) {
-      console.error("Initialization failed:", error);
+      console.warn("Session expired or request failed. Resetting session ID...", error);
+
+      let currentSessionId = crypto.randomUUID();
+      localStorage.setItem('chat_widget_session', currentSessionId);
+      setSessionId(currentSessionId);
     }
   };
 
