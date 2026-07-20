@@ -16,7 +16,9 @@ return [
 
     'llm' => [
         'provider' => env('LLM_PROVIDER', 'groq'),
-        'system_prompt' => env('LLM_SYSTEM_PROMPT', ''),
+        'default_system_prompt' => env('LLM_DEFAULT_SYSTEM_PROMPT', ''),
+        'fallback_system_prompt' => env('LLM_FALLBACK_SYSTEM_PROMPT', ''),
+        'query_rewriter_system_prompt' => env('LLM_QUERY_REWRITER_SYSTEM_PROMPT', ''),
     ],
 
     'embedding' => [

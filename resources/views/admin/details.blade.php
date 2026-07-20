@@ -39,6 +39,7 @@
 
         @if($conversation->telemetry)
         <div class="p-8 space-y-8">
+            {{-- LLM Metrics Overview --}}
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                     <span class="text-xs text-gray-400 font-semibold uppercase block">Model Name</span>
@@ -58,44 +59,93 @@
                 </div>
             </div>
 
+            {{-- Query Information Section --}}
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">User Query Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <span class="text-xs text-gray-400 font-semibold uppercase block mb-1">Original User Input</span>
+                        <p class="text-sm text-gray-800 font-medium whitespace-pre-wrap">{{ $conversation->telemetry->user_input ?? 'N/A' }}</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-gray-400 font-semibold uppercase block">Rewritten Query</span>
+                            @if($conversation->telemetry->rewritten_query)
+                                <span class="px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100 rounded-full">Optimized</span>
+                            @else
+                                <span class="px-2 py-0.5 text-[10px] font-semibold text-gray-500 bg-gray-200 rounded-full">Unchanged</span>
+                            @endif
+                        </div>
+                        <p class="text-sm text-gray-800 font-medium whitespace-pre-wrap">{{ $conversation->telemetry->rewritten_query ?? $conversation->telemetry->user_input ?? 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Pipeline Performance Breakdown --}}
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Pipeline Execution Latencies</h2>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Query Rewriter LLM:</span>
+                        <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->rewrite_duration_ms ?? '0' }} ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Embedding Generation:</span>
+                        <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->embedding_duration_ms ?? '0' }} ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Vector Context Search:</span>
+                        <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->database_duration_ms ?? '0' }} ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Main LLM Generation:</span>
+                        <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->llm_duration_ms }} ms</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Token Metrics Breakdown (Separated) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {{-- Query Rewriter LLM Metrics --}}
                 <div class="space-y-3">
-                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Pipeline Performance</h2>
+                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Query Rewriter Tokens</h2>
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2.5 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Embedding Generation:</span>
-                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->embedding_duration_ms ?? '0' }} ms</span>
+                            <span class="text-gray-500">Prompt / Input Tokens:</span>
+                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->rewrite_prompt_tokens ?? 0 }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">Vector Search context:</span>
-                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->database_duration_ms ?? '0' }} ms</span>
+                            <span class="text-gray-500">Completion / Output Tokens:</span>
+                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->rewrite_completion_tokens ?? 0 }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">LLM Generation latency:</span>
-                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->llm_duration_ms }} ms</span>
+                        <div class="flex justify-between font-bold border-t border-dashed border-gray-200 pt-2 text-slate-700">
+                            <span>Rewriter Total:</span>
+                            <span>{{ $conversation->telemetry->rewrite_total_tokens ?? 0 }} tokens</span>
                         </div>
                     </div>
                 </div>
 
+                {{-- Main LLM Metrics --}}
                 <div class="space-y-3">
-                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Token Metrics</h2>
+                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Main LLM Tokens</h2>
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2.5 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-500">Prompt / Input Tokens:</span>
-                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->prompt_tokens }}</span>
+                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->prompt_tokens ?? 0 }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Completion / Output Tokens:</span>
-                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->completion_tokens }}</span>
+                            <span class="font-mono text-gray-700">{{ $conversation->telemetry->completion_tokens ?? 0 }}</span>
                         </div>
                         <div class="flex justify-between font-bold border-t border-dashed border-gray-200 pt-2 text-indigo-700">
-                            <span>Total Usage:</span>
-                            <span>{{ $conversation->telemetry->total_tokens }} tokens</span>
+                            <span>Main Answer Total:</span>
+                            <span>{{ $conversation->telemetry->total_tokens ?? 0 }} tokens</span>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {{-- Categories --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100 flex justify-between items-center">
                     <div>
@@ -113,6 +163,7 @@
             
             <hr class="border-gray-100">
 
+            {{-- Compiled Prompt Execution --}}
             <div class="space-y-6">
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">Compiled Agent Prompt Execution</h3>

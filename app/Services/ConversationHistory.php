@@ -10,7 +10,6 @@ class ConversationHistory
 {
     public function store(string $sessionId, string $question, string $answer): int
     {
-        // Using Eloquent create() is cleaner and automatically handles timestamps
         $record = ConversationHistoryModel::create([
             'session_id' => $sessionId,
             'question'   => $question,
@@ -84,7 +83,6 @@ class ConversationHistory
             return false;
         }
 
-        // Eloquent update returns a boolean automatically
         return $interaction->update([
             'feedback' => $feedbackValue,
         ]);
