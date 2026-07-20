@@ -8,22 +8,20 @@ use App\Http\Requests\FeedbackRequest;
 use App\Services\AnswerGeneration;
 use App\Services\Category;
 use App\Services\ConversationHistory;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\DomainManager;
 use App\Exceptions\SessionExpiredException;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Exception;
 
 class ChatController extends Controller
 {
-
     public function __construct(
         protected AnswerGeneration $pipelineService,
         protected Category $categoryService,
         protected DomainManager $domainManager,
         protected ConversationHistory $historyService
     ) {}
-
 
     public function categories(Request $request): JsonResponse
     {   
@@ -32,19 +30,17 @@ class ChatController extends Controller
         if (!is_numeric($parent)) {
             return response()->json([
                 'error' => "Invalid parameter. 'parent' must be a number."
-            ], 500);
+            ], 422)->header('Content-Type', 'application/json; charset=utf-8');
         }
 
-        try{
+        try {
             $categories = $this->categoryService->getActiveCategories($parent);
             
             return response()->json([
                 'categories' => $categories
             ], 200)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
+            return $this->errorResponse($e);
         }
     }
 
@@ -58,12 +54,10 @@ class ChatController extends Controller
             ], 200)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (SessionExpiredException $e) {
             return response()->json([
-                'error' => $e->getMessage()
+                'error' => $this->shouldExposeError() ? $e->getMessage() : 'Session expired'
             ], 401)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
+            return $this->errorResponse($e);
         }
     }
 
@@ -84,16 +78,14 @@ class ChatController extends Controller
 
         try {
             $result = $this->pipelineService->generate($userInput, $sessionId, $mainCategory, $childCategory);
-            //$answer = "testando...";
+
             return response()->json([
                 'conversationId' => $result['conversationId'],
                 'answer' => $result['answer'],
                 'question' => $userInput
-            ])->header('Content-Type', 'application/json; charset=utf-8');
+            ], 200)->header('Content-Type', 'application/json; charset=utf-8');
         } catch (Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500)->header('Content-Type', 'application/json; charset=utf-8');
+            return $this->errorResponse($e);
         }
     }
 
@@ -103,7 +95,9 @@ class ChatController extends Controller
         $feedbackValue = $request->input('rating');
 
         if (!$conversationId || !$feedbackValue) {
-            return response()->json(['error' => 'Missing required body parameters (conversationId, rating).'], 422);
+            return response()->json([
+                'error' => 'Missing required body parameters (conversationId, rating).'
+            ], 422);
         }
 
         try {
@@ -121,49 +115,24 @@ class ChatController extends Controller
             ], 200);
 
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'An error occurred while saving your feedback.',
-                'details' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse($e, 'An error occurred while saving your feedback.');
         }
     }
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+
+    private function shouldExposeError(): bool
     {
-        //
+        return config('app.debug', env('APP_DEBUG', false));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    private function errorResponse(Exception $e, ?string $customMessage = null): JsonResponse
     {
-        //
-    }
+        $response = [
+            'error' => $this->shouldExposeError() 
+                ? ($customMessage ? "{$customMessage} {$e->getMessage()}" : $e->getMessage()) 
+                : 'Internal server error'
+        ];
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json($response, 500)
+            ->header('Content-Type', 'application/json; charset=utf-8');
     }
 }
