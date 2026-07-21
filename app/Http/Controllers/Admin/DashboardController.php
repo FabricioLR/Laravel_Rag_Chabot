@@ -22,33 +22,32 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         try {
-            $metrics = $this->dashboardService->getSyncMetrics();
-            $metrics['latest_posts'] = $this->dashboardService->getLatestIndexedPosts();
-            $metrics['unindexed_posts'] = $this->dashboardService->getLatestUnindexedPosts();
-            $metrics['failed_jobs'] = $this->dashboardService->getLatestFailedJobs();
-
-            $domains = AllowedDomain::orderBy('created_at', 'DESC')->get();
-            $feedbacks = $this->dashboardService->getPaginatedFeedback(5);
-
-            return view('admin.dashboard', array_merge($metrics, [
-                'domains' => $domains,
-                'feedbacks' => $feedbacks
-            ]));
-        } catch (Throwable $e) {
-            $metrics = [
+            $data = array_merge(
+                $this->dashboardService->getSyncMetrics(),
+                $this->dashboardService->getPipelineMetrics(),
+                [
+                    'latest_posts'    => $this->dashboardService->getLatestIndexedPosts(),
+                    'unindexed_posts' => $this->dashboardService->getLatestUnindexedPosts(),
+                    'failed_jobs'     => $this->dashboardService->getLatestFailedJobs(),
+                    'domains'         => AllowedDomain::orderBy('created_at', 'DESC')->get(),
+                    'feedbacks'       => $this->dashboardService->getPaginatedFeedback(5),
+                ]
+            );
+        } catch (\Throwable $e) {
+            $data = [
                 'total_wordpress_posts' => 0,
                 'indexed_posts_count'   => 0,
                 'posts_remaining'       => 0,
                 'latest_posts'          => [],
                 'unindexed_posts'       => [],
                 'failed_jobs'           => [],
-                'error'                 => $e->getMessage()
+                'domains'               => [],
+                'feedbacks'             => [],
+                'error'                 => $e->getMessage(),
             ];
-            return view('admin.dashboard', array_merge($metrics, [
-                'domains' => [],
-                'feedbacks' => []
-            ]));
         }
+
+        return view('admin.dashboard', $data);
     }
 
     public function details($id)

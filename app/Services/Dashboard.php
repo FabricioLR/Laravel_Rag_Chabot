@@ -10,6 +10,46 @@ use Exception;
 
 class Dashboard
 {
+    public function getPipelineMetrics(): array
+    {
+        Log::info('Fetching pipeline execution and token usage metrics from telemetry for admin dashboard.');
+
+        try {
+            $metrics = DB::table('generation_telemetries')
+                ->selectRaw('
+                    AVG(total_duration_ms) as avg_total_duration_ms,
+                    AVG(prompt_tokens + COALESCE(rewrite_prompt_tokens, 0)) as avg_input_tokens,
+                    AVG(completion_tokens + COALESCE(rewrite_completion_tokens, 0)) as avg_output_tokens,
+                    AVG(total_tokens + COALESCE(rewrite_total_tokens, 0)) as avg_total_tokens
+                ')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->first();
+
+            $avgDurationSeconds = round(($metrics->avg_total_duration_ms ?? 0) / 1000, 2);
+
+            return [
+                'avg_duration_ms'      => round($metrics->avg_total_duration_ms ?? 0, 2),
+                'avg_duration_seconds' => $avgDurationSeconds,
+                'avg_input_tokens'     => (int) round($metrics->avg_input_tokens ?? 0),
+                'avg_output_tokens'    => (int) round($metrics->avg_output_tokens ?? 0),
+                'avg_total_tokens'     => (int) round($metrics->avg_total_tokens ?? 0)
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Failed to calculate generation telemetry metrics.', [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage()
+            ]);
+
+            return [
+                'avg_duration_ms'      => 0.0,
+                'avg_duration_seconds' => 0.0,
+                'avg_input_tokens'     => 0,
+                'avg_output_tokens'    => 0,
+                'avg_total_tokens'     => 0
+            ];
+        }
+    }
     public function getSyncMetrics(): array
     {
         Log::info('Fetching WordPress synchronization metrics for admin dashboard.');
