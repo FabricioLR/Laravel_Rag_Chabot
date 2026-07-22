@@ -45,16 +45,18 @@ export default function MessageList({ messages, isLoading, activeOptions, onOpti
           <div 
             key={index} 
             ref={isLast ? lastMessageRef : null}
-            className={`cb:flex cb:flex-col cb:max-w-[85%] ${isUser ? 'cb:self-end cb:items-end' : 'cb:self-start cb:items-start'}`}
+            /* min-w-0 prevents flex overflow while break-words keeps normal text wrapping */
+            className={`cb:flex cb:flex-col cb:max-w-[85%] cb:min-w-0 ${isUser ? 'cb:self-end cb:items-end' : 'cb:self-start cb:items-start'}`}
           >
-            <div className={`cb:p-3 cb:rounded-xl cb:text-sm cb:leading-relaxed cb:shadow-sm cb:border ${
+            <div className={`cb:p-3 cb:rounded-xl cb:text-sm cb:leading-relaxed cb:shadow-sm cb:border cb:min-w-0 cb:w-full ${
               isUser 
                 ? 'cb:bg-[#e2edf8] cb:text-[#0a3a60] cb:border-[#cbdff2]' 
                 : 'cb:bg-white cb:text-[#2c3e50] cb:border-[#e2edf8]'
             }`}>
-              <div className="cb:overflow-hidden cb:break-words cb:whitespace-pre-wrap">
+              {/* Use break-words and overflow-wrap anywhere so normal words stay intact */}
+              <div className="cb:min-w-0 cb:w-full cb:break-words cb:[overflow-wrap:anywhere] cb:whitespace-pre-wrap">
                 {msg.sender === 'bot' ? (
-                  <span dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
+                  <div dangerouslySetInnerHTML={{ __html: formatBotResponse(msg.text) }} />
                 ) : (
                   msg.text
                 )}
