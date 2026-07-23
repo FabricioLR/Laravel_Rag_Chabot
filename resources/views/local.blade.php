@@ -14,7 +14,6 @@
         @viteReactRefresh
         @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
     @else
-        <link rel="stylesheet" href="{{ asset('build/widget.css') }}">
         <script src="{{ asset('build/widget.js') }}" defer></script>
     @endif
 </head>

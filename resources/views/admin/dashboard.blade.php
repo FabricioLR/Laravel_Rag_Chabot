@@ -16,10 +16,6 @@
                 <div class="flex justify-between items-center h-16">
                     <div class="flex items-center space-x-3">
                         <span class="text-xl font-bold text-gray-800">Control Panel</span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                            <span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Pipeline Healthy
-                        </span>
                     </div>
                     
                     <div class="flex items-center space-x-4">
@@ -45,20 +41,8 @@
             <!-- Header Section with Actions -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-gray-200 gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-gray-900">Ingestion, Latency & Token Metrics</h1>
-                    <p class="text-sm text-gray-500 mt-1">Real-time LLM query execution latency, token utilization, and pipeline status.</p>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <button 
-                        @click="refreshing = true; window.location.reload();" 
-                        class="px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition flex items-center gap-2 cursor-pointer"
-                    >
-                        <svg :class="refreshing ? 'animate-spin' : ''" class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Refresh Data
-                    </button>
+                    <h1 class="text-3xl font-extrabold text-gray-900">Metrics</h1>
+                    <p class="text-sm text-gray-500 mt-1">LLM query execution latency, token utilization, and pipeline status.</p>
                 </div>
             </div>
 
@@ -79,12 +63,9 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Avg Latency</span>
-                            <span class="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </span>
                         </div>
                         <div class="mt-2 flex items-baseline gap-2">
-                            <span class="text-3xl font-bold text-gray-900">
+                            <span class="text-3xl font-bold text-emerald-600">
                                 {{ isset($avg_duration_ms) ? number_format($avg_duration_ms, 0) : '0' }} <span class="text-lg font-normal text-gray-500">ms</span>
                             </span>
                         </div>
@@ -97,9 +78,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Avg Input Tokens</span>
-                            <span class="p-2 bg-sky-50 text-sky-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                            </span>
                         </div>
                         <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($avg_input_tokens ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Prompt context depth</p>
@@ -109,11 +87,8 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Avg Output Tokens</span>
-                            <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3m13-4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                            </span>
                         </div>
-                        <p class="text-3xl font-bold text-emerald-600 mt-2">{{ number_format($avg_output_tokens ?? 0) }}</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($avg_output_tokens ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Generated answer length</p>
                     </div>
 
@@ -121,9 +96,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">AVG Total Tokens</span>
-                            <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            </span>
                         </div>
                         <p class="text-3xl font-bold text-indigo-600 mt-2">{{ number_format($avg_total_tokens ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Combined input + output</p>
@@ -140,9 +112,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Total WP Posts</span>
-                            <span class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                            </span>
                         </div>
                         <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($total_wordpress_posts ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Source total</p>
@@ -151,12 +120,9 @@
                     <!-- Indexed Posts (pgvector) -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Indexed (pgvector)</span>
-                            <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </span>
+                            <span class="text-xs font-semibold uppercase tracking-wider">Indexed</span>
                         </div>
-                        <p class="text-3xl font-bold text-emerald-600 mt-2">{{ number_format($indexed_posts_count ?? 0) }}</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($indexed_posts_count ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Ready for vector search</p>
                     </div>
 
@@ -164,11 +130,8 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Queue Backlog</span>
-                            <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </span>
                         </div>
-                        <p class="text-3xl font-bold text-amber-500 mt-2">{{ number_format($posts_remaining ?? 0) }}</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($posts_remaining ?? 0) }}</p>
                         <p class="text-xs text-gray-500 mt-1">Awaiting vectorization</p>
                     </div>
 
@@ -176,9 +139,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Sync Completeness</span>
-                            <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            </span>
                         </div>
                         <div class="mt-2 flex items-baseline gap-2">
                             @php

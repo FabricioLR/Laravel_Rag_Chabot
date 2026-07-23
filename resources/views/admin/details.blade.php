@@ -50,8 +50,8 @@
                     <span class="text-gray-900 font-mono font-medium">{{ $conversation->telemetry->temperature }}</span>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                    <span class="text-xs text-gray-400 font-semibold uppercase block">Max Output Tokens</span>
-                    <span class="text-gray-900 font-mono font-medium">{{ $conversation->telemetry->max_tokens }}</span>
+                    <span class="text-xs text-gray-400 font-semibold uppercase block">Total Tokens</span>
+                    <span class="text-indigo-600 font-bold font-mono">{{ ($conversation->telemetry->rewrite_total_tokens ?? 0) + ($conversation->telemetry->total_tokens ?? 0) }}</span>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                     <span class="text-xs text-gray-400 font-semibold uppercase block">Total Duration</span>
@@ -70,11 +70,6 @@
                     <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs text-gray-400 font-semibold uppercase block">Rewritten Query</span>
-                            @if($conversation->telemetry->rewritten_query)
-                                <span class="px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-100 rounded-full">Optimized</span>
-                            @else
-                                <span class="px-2 py-0.5 text-[10px] font-semibold text-gray-500 bg-gray-200 rounded-full">Unchanged</span>
-                            @endif
                         </div>
                         <p class="text-sm text-gray-800 font-medium whitespace-pre-wrap">{{ $conversation->telemetry->rewritten_query ?? $conversation->telemetry->user_input ?? 'N/A' }}</p>
                     </div>
@@ -118,7 +113,7 @@
                             <span class="text-gray-500">Completion / Output Tokens:</span>
                             <span class="font-mono text-gray-700">{{ $conversation->telemetry->rewrite_completion_tokens ?? 0 }}</span>
                         </div>
-                        <div class="flex justify-between font-bold border-t border-dashed border-gray-200 pt-2 text-slate-700">
+                        <div class="flex justify-between font-bold border-t border-dashed border-gray-200 pt-2 text-indigo-700">
                             <span>Rewriter Total:</span>
                             <span>{{ $conversation->telemetry->rewrite_total_tokens ?? 0 }} tokens</span>
                         </div>
@@ -166,7 +161,7 @@
             {{-- Compiled Prompt Execution --}}
             <div class="space-y-6">
                 <div>
-                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">Compiled Agent Prompt Execution</h3>
+                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2">Compiled Agent Prompt</h3>
                     <div id="telemetry-container" class="relative group">
                         <button 
                             onclick="toggleTelemetryFullscreen()" 
@@ -178,9 +173,15 @@
                             </svg>
                         </button>
 
-                        <div id="telemetry-box" class="flex flex-col bg-gray-900 text-gray-100 text-xs font-mono p-4 rounded-lg border border-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full">
-                            <div class="flex-1">
+                        <div id="telemetry-box" class="flex flex-col bg-gray-900 text-gray-100 text-xs font-mono p-4 rounded-lg border border-gray-800 max-h-96 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-900 [&::-webkit-scrollbar-thumb]:bg-gray-700 [&::-webkit-scrollbar-thumb]:rounded-full">
+                            <div class="flex-1 whitespace-pre-line">
+                                # [SYSTEM PROMPT]
+                                {{ $conversation->telemetry->system_prompt }}
+
+                                ---
+
                                 {{ $conversation->telemetry->compiled_prompt }}
+
                                 {{ $conversation->answer }}
                             </div>
                         </div>
