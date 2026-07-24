@@ -55,7 +55,7 @@ class Category
         }
     }
 
-    public function getFormatedChildCategories(string $mainCategory, ?string $childCategory = null): string 
+    public function getFormatedChildCategories(?string $mainCategory = null, ?string $childCategory = null): string 
     {
         try {
             $wpTablePrefix = config('database.connections.wordpress.prefix', 'wp_');

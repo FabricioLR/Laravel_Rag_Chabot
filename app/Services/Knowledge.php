@@ -30,21 +30,33 @@ class Knowledge
             'rrfK2' => $rffKValue,
         ];
 
-        $categoryFilter = '';
+        $categoryFilter1 = '';
+        $categoryFilter2 = '';
+        $selectedCategory = $childCategory ?? $mainCategory;
 
-        if ($childCategory) {
-            $childCode = trim(explode('-', $childCategory)[0]);
-            
-            $categoryFilter .= " AND (metadata->>'source_post_categories' LIKE :childDot OR metadata->>'source_post_categories' LIKE :childSpace)";
-            $bindings['childDot'] = $childCode . '.%';
-            $bindings['childSpace'] = $childCode . ' %';
+        if (!empty($selectedCategory)) {
+            $rawCategories = explode(',', $selectedCategory);
+            $codes = [];
 
-        } elseif ($mainCategory) {
-            $mainCode = trim(explode('-', $mainCategory)[0]);
-            
-            $categoryFilter .= " AND (metadata->>'source_post_categories' LIKE :mainDot OR metadata->>'source_post_categories' LIKE :mainSpace)";
-            $bindings['mainDot'] = $mainCode . '.%';
-            $bindings['mainSpace'] = $mainCode . ' %';
+            foreach ($rawCategories as $cat) {
+                $cat = trim($cat);
+                if ($cat === '') continue;
+
+                if (preg_match('/^([0-9]+(?:[\.-][0-9]+)*)/', $cat, $matches)) {
+                    $code = str_replace('-', '.', $matches[1]);
+                    $codes[] = preg_quote($code, '/');
+                }
+            }
+
+            if (!empty($codes)) {
+                $pattern = '(^|, )(' . implode('|', array_unique($codes)) . ')(\.|\s|$)';
+
+                $categoryFilter1 = " AND metadata->>'source_post_categories' ~ :categoryRegex1";
+                $categoryFilter2 = " AND metadata->>'source_post_categories' ~ :categoryRegex2";
+
+                $bindings['categoryRegex1'] = $pattern;
+                $bindings['categoryRegex2'] = $pattern;
+            }
         }
 
         $results = DB::connection('pgvector')->select("
@@ -62,7 +74,7 @@ class Knowledge
                         rank() OVER (ORDER BY :vector1::vector <=> embedding) AS rank
                     FROM vectors
                     WHERE (:vector2::vector <=> embedding) < :vectorDistance
-                    {$categoryFilter}
+                    {$categoryFilter1}
                     ORDER BY :vector3::vector <=> embedding
                     LIMIT 40
                 )
@@ -76,7 +88,7 @@ class Knowledge
                     FROM vectors
                     WHERE
                         plainto_tsquery('portuguese', :input2) @@ to_tsvector('portuguese', text)
-                        {$categoryFilter}
+                        {$categoryFilter2}
                     ORDER BY rank
                     LIMIT 40
                 )

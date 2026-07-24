@@ -14,12 +14,14 @@ class QueryRewriter
 
     public function rewrite(string $sessionId, string $userInput, string $conversationHistory): array
     {
-        //if (empty(trim($conversationHistory))) {
-        //    return [
-        //        'query' => $userInput,
-        //        'llm'   => null,
-        //    ];
-        //}
+        $enabled = config("rag.query_rewriter.enabled", env("RAG_ENABLE_QUERY_REWRITER", true));
+
+        if (!$enabled) {
+            return [
+                'query' => $userInput,
+                'llm'   => null,
+            ];
+        }
 
         [$systemPrompt, $prompt] = $this->promptBuilder->buildQueryRewriterPrompt($userInput, $conversationHistory);
 

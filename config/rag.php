@@ -18,4 +18,7 @@ return [
         'max_words'          => (int) env('RAG_INGEST_MAX_WORDS', 500),
         'overlap_words'      => (int) env('RAG_INGEST_OVERLAP_WORDS', 50),
     ],
+    'query_rewriter' => [
+        'enabled' => (bool) env('RAG_ENABLE_QUERY_REWRITER', true)
+    ]
 ];
