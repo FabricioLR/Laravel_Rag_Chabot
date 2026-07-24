@@ -95,8 +95,12 @@ export function useChatEngine(appUrl, clientToken) {
         headers: { 'Accept': 'application/json', 'X-Client-Token': clientToken, 'Content-Type': 'application/json; charset=UTF-8' }
       });
 
-      if (historyRes.status === 401 || !historyRes.ok) {
+      if (historyRes.status === 401) {
         throw new Error(`Session expired or invalid (Status: ${historyRes.status})`);
+      } else if (historyRes.status === 429){
+        return;
+      } else if (!historyRes.ok) {
+        return;
       }
       
       const historyData = historyRes.ok ? await historyRes.json() : { messages: [] };

@@ -138,122 +138,128 @@ class Knowledge
 
     private function buildWindowContext(array $results): string
     {
-        $charsPerToken = config("rag.context.chars_per_token", env("RAG_CHARS_PER_TOKEN", 2.7));
-        $maxContextTokens = config("rag.context.max_tokens", env("RAG_MAX_CONTEXT_TOKENS", 6000));
-        
+        $charsPerToken = config('rag.context.chars_per_token', env('RAG_CHARS_PER_TOKEN', 2.7));
+        $maxContextTokens = config('rag.context.max_tokens', env('RAG_MAX_CONTEXT_TOKENS', 6000));
+        $maxChars = (int) ($maxContextTokens * $charsPerToken);
+
+        if (empty($results)) {
+            return '';
+        }
+
         $contextBlocks = [];
-        $currentTokensCount = 0;
+        $currentChars = 0;
 
         foreach ($results as $item) {
-            $metadata = json_decode($item->metadata, true);
-            $postId = $metadata['source_post_id'] ?? null;
-            $chunkIndex = isset($metadata['chunk_index']) ? (int)$metadata['chunk_index'] : null;
-            $title = $metadata['source_post_title'] ?? 'N/A';
-            $url = $metadata['source_post_url'] ?? 'N/A';
+            $metadata = is_string($item->metadata) ? json_decode($item->metadata, true) : (array) $item->metadata;
+            $postId = $metadata['source_post_id'] ?? ('fallback_' . $item->id);
+            $chunkIndex = isset($metadata['chunk_index']) ? (int) $metadata['chunk_index'] : 0;
 
-            $groupKey = $postId ?: 'fallback_' . $item->id;
-
-            $currentTokensCount = $this->calculateTotalTokens($contextBlocks, $charsPerToken);
-            if ($currentTokensCount >= $maxContextTokens) {
-                break;
-            }
-
-            if (!isset($contextBlocks[$groupKey])) {
-                $contextBlocks[$groupKey] = [
-                    'title' => $title,
-                    'url' => $url,
-                    'original_indices' => is_null($chunkIndex) ? [] : [$chunkIndex],
-                    'chunks' => [
-                        (is_null($chunkIndex) ? 0 : $chunkIndex) => $item->text
-                    ]
+            if (!isset($contextBlocks[$postId])) {
+                $contextBlocks[$postId] = [
+                    'title' => $metadata['source_post_title'] ?? 'N/A',
+                    'url'   => $metadata['source_post_url'] ?? 'N/A',
+                    'original_indices' => [],
+                    'chunks' => []
                 ];
-            } else {
-                $targetKey = is_null($chunkIndex) ? 0 : $chunkIndex;
-                $contextBlocks[$groupKey]['chunks'][$targetKey] = $item->text;
-                
-                if (!is_null($chunkIndex) && !in_array($chunkIndex, $contextBlocks[$groupKey]['original_indices'])) {
-                    $contextBlocks[$groupKey]['original_indices'][] = $chunkIndex;
-                }
+            }
+
+            if (!isset($contextBlocks[$postId]['chunks'][$chunkIndex])) {
+                $contextBlocks[$postId]['chunks'][$chunkIndex] = $item->text;
+                $contextBlocks[$postId]['original_indices'][] = $chunkIndex;
             }
         }
 
-        $currentTokensCount = $this->calculateTotalTokens($contextBlocks, $charsPerToken);
+        $currentChars = $this->calculateTotalChars($contextBlocks);
+        if ($currentChars >= $maxChars) {
+            return $this->formatFinalContext($contextBlocks, $maxChars);
+        }
 
-        $expansionOffsets = [-1, 1];
+        $missingRequests = [];
+        foreach ($contextBlocks as $postId => $block) {
+            if (str_starts_with((string)$postId, 'fallback_')) {
+                continue;
+            }
 
-        if ($currentTokensCount < $maxContextTokens) {
-            foreach ($expansionOffsets as $offset) {
-                foreach ($contextBlocks as $postId => &$block) {
-                    
-                    foreach ($block['original_indices'] as $baseIndex) {
-                        if (is_null($baseIndex)) {
-                            continue;
-                        }
-
-                        $targetIndex = $baseIndex + $offset;
-
-                        if (isset($block['chunks'][$targetIndex])) {
-                            continue;
-                        }
-
-                        $currentTokensCount = $this->calculateTotalTokens($contextBlocks, $charsPerToken);
-                        if ($currentTokensCount >= $maxContextTokens) {
-                            break 3;
-                        }
-
-                        $neighborText = DB::connection('pgvector')
-                            ->table('vectors')
-                            ->where(DB::raw("metadata->>'source_post_id'"), (string)$postId)
-                            ->where(DB::raw("cast(metadata->>'chunk_index' as integer)"), $targetIndex)
-                            ->value('text');
-
-                        if ($neighborText) {
-                            $block['chunks'][$targetIndex] = $neighborText;
-
-                            $newTokensCount = $this->calculateTotalTokens($contextBlocks, $charsPerToken);
-
-                            if ($newTokensCount > $maxContextTokens) {
-                                unset($block['chunks'][$targetIndex]);
-                                break 3;
-                            }
-                        }
+            foreach ($block['original_indices'] as $baseIdx) {
+                foreach ([-1, 1] as $offset) {
+                    $targetIdx = $baseIdx + $offset;
+                    if ($targetIdx >= 0 && !isset($block['chunks'][$targetIdx])) {
+                        $missingRequests[$postId][] = $targetIdx;
                     }
-                    unset($block);
                 }
             }
         }
 
-        $finalContextString = "";
-        foreach ($contextBlocks as $block_) {
-            ksort($block_['chunks']);
-            
-            $cohesiveText = implode("\n\n", $block_['chunks']);
-            $finalContextString .= $this->renderTag($block_['title'], $block_['url'], $cohesiveText);
+        if (!empty($missingRequests)) {
+            $queryBuilder = DB::connection('pgvector')->table('vectors');
+
+            $queryBuilder->where(function ($query) use ($missingRequests) {
+                foreach ($missingRequests as $postId => $indices) {
+                    $indices = array_unique($indices);
+                    $query->orWhere(function ($q) use ($postId, $indices) {
+                        $q->where(DB::raw("metadata->>'source_post_id'"), (string)$postId)
+                        ->whereIn(DB::raw("cast(metadata->>'chunk_index' as integer)"), $indices);
+                    });
+                }
+            });
+
+            $neighbors = $queryBuilder->select('text', 'metadata')->get();
+
+            foreach ($neighbors as $neighbor) {
+                $meta = is_string($neighbor->metadata) ? json_decode($neighbor->metadata, true) : (array) $neighbor->metadata;
+                $postId = $meta['source_post_id'] ?? null;
+                $chunkIndex = isset($meta['chunk_index']) ? (int) $meta['chunk_index'] : null;
+
+                if ($postId && !is_null($chunkIndex) && isset($contextBlocks[$postId])) {
+                    $contextBlocks[$postId]['chunks'][$chunkIndex] = $neighbor->text;
+
+                    if ($this->calculateTotalChars($contextBlocks) > $maxChars) {
+                        unset($contextBlocks[$postId]['chunks'][$chunkIndex]);
+                        break;
+                    }
+                }
+            }
         }
 
-        return $finalContextString;
-    }
+        $result = $this->formatFinalContext($contextBlocks, $maxChars);
 
-    private function calculateTotalTokens(array $contextBlocks, float $charsPerToken): int
+        return $result;
+    }
+    private function calculateTotalChars(array $contextBlocks): int
     {
-        $tempContext = "";
+        $totalChars = 0;
         foreach ($contextBlocks as $block) {
             ksort($block['chunks']);
             $cohesiveText = implode("\n\n", $block['chunks']);
-            $tempContext .= $this->renderTag($block['title'], $block['url'], $cohesiveText);
+            $totalChars += mb_strlen($this->renderTag($block['title'], $block['url'], $cohesiveText));
         }
-        
-        return (int) ceil(mb_strlen($tempContext) / $charsPerToken);
-    }
 
+        return $totalChars;
+    }
+    private function formatFinalContext(array $contextBlocks, int $maxChars): string
+    {
+        $out = '';
+        foreach ($contextBlocks as $block) {
+            ksort($block['chunks']);
+            $cohesiveText = implode("\n\n", $block['chunks']);
+            $rendered = $this->renderTag($block['title'], $block['url'], $cohesiveText);
+
+            if (mb_strlen($out . $rendered) > $maxChars) {
+                break;
+            }
+
+            $out .= $rendered;
+        }
+
+        return $out;
+    }
     private function renderTag(string $title, string $url, string $text): string
     {
-        $tag = "<" . $title . ">\n";
-        $tag .= "[URL do Post]: " . $url . "\n";
-        $tag .= "[Título do Post]: " . $title . "\n";
-        $tag .= "[Texto do Post]: " . $text . "\n";
-        $tag .= "</" . $title . ">\n\n";
-        return $tag;
+        return "<{$title}>\n"
+            . "[URL do Post]: {$url}\n"
+            . "[Título do Post]: {$title}\n"
+            . "[Texto do Post]: {$text}\n"
+            . "</{$title}>\n\n";
     }
 
 }
