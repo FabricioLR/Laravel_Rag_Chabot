@@ -460,7 +460,11 @@
                                     `    src="${appUrl}/build/widget.js"\n` +
                                     `    data-app-url="${appUrl}"\n` +
                                     `    data-client-token="${token}"\n` +
-                                    `    charset="UTF-8"\n` +
+                                    `    data-position-bottom="20px"\n` +
+                                    `    data-position-right="20px"\n` +
+                                    `    data-button-width="60px"\n` +
+                                    `    data-button-height="60px"\n` +
+                                    `    charset="UTF-8">\n` +
                                     `<\/script>`;
                     
                 modal.classList.remove('hidden');
