@@ -34,10 +34,22 @@ import widgetStyles from '../css/widget.css?inline';
     shadowRoot.appendChild(styleElement);
     shadowRoot.appendChild(reactRootTarget);
 
+    const positionBottom = initScript.getAttribute('data-position-bottom') || '20px';
+    const positionRight = initScript.getAttribute('data-position-right') || '20px';
+    const buttonWidth = initScript.getAttribute('data-button-width') || '60px';
+    const buttonHeight = initScript.getAttribute('data-button-height') || '60px';
+
     const root = createRoot(reactRootTarget);
     root.render(
         <React.StrictMode>
-            <ChatWidget appUrl={appUrl} clientToken={clientToken} />
+            <ChatWidget 
+                appUrl={appUrl} 
+                clientToken={clientToken} 
+                positionBottom={positionBottom}
+                positionRight={positionRight}
+                buttonWidth={buttonWidth}
+                buttonHeight={buttonHeight}
+            />
         </React.StrictMode>
     );
 })();
