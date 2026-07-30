@@ -294,14 +294,26 @@ class Dashboard
         }
     }
 
-    public function getPaginatedFeedback(int $perPage = 5): LengthAwarePaginator
+    public function getPaginatedFeedback(int $perPage = 5, ?string $search = null): LengthAwarePaginator
     {
-        Log::info('Fetching paginated user feedback logs for admin dashboard.');
+        Log::info('Fetching paginated user feedback logs for admin dashboard.', ['search' => $search]);
 
-        return DB::table('conversation_histories')
-            ->select('id', 'session_id', 'question', 'answer', 'feedback', 'created_at')
-            ->orderBy('created_at', 'DESC')
-            ->paginate($perPage);
+        $query = DB::table('conversation_histories')
+            ->select('id', 'session_id', 'question', 'answer', 'feedback', 'created_at');
+
+        if (!empty(trim($search))) {
+            $searchTerm = '%' . trim($search) . '%';
+            
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('session_id', 'LIKE', $searchTerm)
+                ->orWhere('question', 'LIKE', $searchTerm)
+                ->orWhere('answer', 'LIKE', $searchTerm);
+            });
+        }
+
+        return $query->orderBy('created_at', 'DESC')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function getRequestsPerDomain(): array

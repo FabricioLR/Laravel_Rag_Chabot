@@ -275,12 +275,53 @@
 
             <!-- Feedback Table -->
             <div class="mt-12" x-data="{ open: true }">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-900">Conversation Logs</h2>
-                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
-                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
-                    </button>
+                <!-- Header Block -->
+                <div class="mb-4">
+                    <!-- Title and Toggle Button Row -->
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-900">Conversation Logs</h2>
+                        <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                            <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                        </button>
+                    </div>
+
+                    <!-- Full-Text Search Input (Placed directly at the bottom of the title) -->
+                    <div x-show="open" x-transition class="mt-3">
+                        <form method="GET" action="{{ url()->current() }}" class="relative max-w-md w-full">
+                            {{-- Preserve existing query string params (e.g. filters/tabs) --}}
+                            @foreach(request()->except(['search', 'page']) as $key => $value)
+                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @endforeach
+
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    name="search" 
+                                    value="{{ request('search') }}" 
+                                    placeholder="Search logs by session, question, or answer..." 
+                                    class="w-full pl-9 pr-8 py-2 text-xs bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-400"
+                                />
+                                <!-- Search Icon -->
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+
+                                <!-- Clear Button (Visible when searching) -->
+                                @if(request('search'))
+                                    <a href="{{ url()->current() }}" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600" title="Clear search">
+                                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </a>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- Table Container -->
                 <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -339,16 +380,21 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400">
-                                            No widget rating submissions received yet.
+                                            @if(request('search'))
+                                                No logs matching "{{ request('search') }}" found.
+                                            @else
+                                                No widget rating submissions received yet.
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
+
                     @if(method_exists($feedbacks, 'hasPages') && $feedbacks->hasPages())
                         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                            {{ $feedbacks->onEachSide(1)->links() }}
+                            {{ $feedbacks->appends(request()->query())->onEachSide(1)->links() }}
                         </div>
                     @endif
                 </div>

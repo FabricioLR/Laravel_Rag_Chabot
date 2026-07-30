@@ -21,6 +21,8 @@ class DashboardController extends Controller
 
     public function index(Request $request): View
     {
+        $search = $request->input('search');
+
         try {
             $data = array_merge(
                 $this->dashboardService->getSyncMetrics(),
@@ -30,7 +32,7 @@ class DashboardController extends Controller
                     'unindexed_posts'     => $this->dashboardService->getLatestUnindexedPosts(),
                     'failed_jobs'         => $this->dashboardService->getLatestFailedJobs(),
                     'domains'             => AllowedDomain::orderBy('created_at', 'DESC')->get(),
-                    'feedbacks'           => $this->dashboardService->getPaginatedFeedback(5),
+                    'feedbacks'           => $this->dashboardService->getPaginatedFeedback(5, $search),
                     'requests_per_domain' => $this->dashboardService->getRequestsPerDomain(),
                 ]
             );
