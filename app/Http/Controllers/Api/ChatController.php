@@ -76,8 +76,10 @@ class ChatController extends Controller
             $childCategory = null;
         }
 
+        $origin = $request->header('Origin') ?? $request->header('Referer');
+
         try {
-            $result = $this->pipelineService->generate($userInput, $sessionId, $mainCategory, $childCategory);
+            $result = $this->pipelineService->generate($userInput, $sessionId, $origin, $mainCategory, $childCategory);
 
             return response()->json([
                 'conversationId' => $result['conversationId'],

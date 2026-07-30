@@ -20,9 +20,9 @@ class AnswerGeneration
         protected QueryRewriter $queryRewriter
     ) {}
 
-    public function generate(string $userInput, string $sessionId, ?string $mainCategory = null, ?string $childCategory = null): array
+    public function generate(string $userInput, string $sessionId, string $origin, ?string $mainCategory = null, ?string $childCategory = null): array
     {
-        Log::info('Chatbot pipeline started.', compact('userInput', 'sessionId', 'mainCategory', 'childCategory'));
+        Log::info('Chatbot pipeline started.', compact('userInput', 'sessionId', 'mainCategory', 'childCategory', 'origin'));
         $totalStartTime = microtime(true);
 
         $conversationHistory = $this->historyService->getFormattedHistory($sessionId);
@@ -54,8 +54,8 @@ class AnswerGeneration
         $conversationId = $this->historyService->store($sessionId, $userInput, $llmResult['answer']);
 
         $totalDuration = round((microtime(true) - $totalStartTime) * 1000, 2);
-        $this->logPerformanceMetrics($userInput, $searchQuery, $conversationHistory, $searchResult, $llmResult, $rewriteLlm, $totalDuration, $sessionId);
-        $this->saveTelemetry($conversationId, $userInput, $searchQuery, $llmResult, $rewriteLlm, $embeddingResult, $searchResult, $totalDuration, $mainCategory, $childCategory);
+        $this->logPerformanceMetrics($userInput, $searchQuery, $conversationHistory, $searchResult, $llmResult, $rewriteLlm, $totalDuration, $sessionId, $origin);
+        $this->saveTelemetry($conversationId, $userInput, $searchQuery, $llmResult, $rewriteLlm, $embeddingResult, $searchResult, $totalDuration, $mainCategory, $childCategory, $origin);
 
         return [
             'answer' => $llmResult['answer'], 
@@ -70,7 +70,8 @@ class AnswerGeneration
         array $llm, 
         ?array $rewriteLlm, 
         float $duration, 
-        string $sessionId
+        string $sessionId,
+        string $origin
     ): void {
         $queryLen   = strlen($rewrittenQuery);
         $contextLen = strlen($search['context'] ?? '');
@@ -79,6 +80,7 @@ class AnswerGeneration
         Log::info('Chatbot pipeline fully completed.', [
             'user_input'        => $rawUserInput,
             'rewritten_query'   => $rewrittenQuery,
+            'origin'            => $origin,
             'answer'            => $llm['answer'],
             'session_id'        => $sessionId,
             'total_duration_ms' => $duration,
@@ -119,11 +121,15 @@ class AnswerGeneration
         array $search, 
         float $totalDuration, 
         ?string $mainCat, 
-        ?string $childCat
+        ?string $childCat,
+        string $origin
     ): void {
         try {
+            $parsed = parse_url($origin);
+            $domainWithPort = $parsed['host'] . (isset($parsed['port']) ? ':' . $parsed['port'] : '');
             GenerationTelemetry::create([
                 'conversation_history_id' => $conversationId,
+                'origin'                  => $domainWithPort,
                 'user_input'              => $rawUserInput,
                 'rewritten_query'         => $rewrittenQuery,
 

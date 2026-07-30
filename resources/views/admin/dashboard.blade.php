@@ -154,9 +154,14 @@
             </div>
 
             <!-- Recently Indexed Posts -->
-            <div class="mt-12">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Recently Indexed Posts</h2>
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+            <div class="mt-12" x-data="{ open: false }">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Indexed Posts</h2>
+                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                    </button>
+                </div>
+                <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -191,9 +196,14 @@
             </div>
 
             <!-- Pending Indexing Table -->
-            <div class="mt-12">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Latest Published Posts Awaiting Indexing</h2>
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+            <div class="mt-12" x-data="{ open: false }">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Awaiting Indexing</h2>
+                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                    </button>
+                </div>
+                <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -226,9 +236,14 @@
             </div>
 
             <!-- Ingestion Failures Table -->
-            <div class="mt-12">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Ingestion Failures</h2>
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+            <div class="mt-12" x-data="{ open: false }">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Ingestion Failures</h2>
+                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                    </button>
+                </div>
+                <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -259,9 +274,14 @@
             </div>
 
             <!-- Feedback Table -->
-            <div class="mt-12">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">User Sentiment Feedback Logs</h2>
-                <div class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+            <div class="mt-12" x-data="{ open: true }">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Conversation Logs</h2>
+                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                    </button>
+                </div>
+                <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -281,7 +301,6 @@
                                                 <a href="{{ route('admin.details', $feedback->id) }}" class="truncate cursor-pointer text-indigo-600 hover:text-indigo-900 font-semibold hover:underline" title="View detailed LLM request & prompt parameters">
                                                     {{ $feedback->session_id }}
                                                 </a>
-                                                
                                                 <button type="button" 
                                                         onclick="copySessionId('{{ $feedback->session_id }}', this)" 
                                                         class="text-gray-400 hover:text-indigo-600 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
@@ -292,15 +311,12 @@
                                                 </button>
                                             </div>
                                         </td>
-                                        
                                         <td class="px-6 py-4 text-sm text-gray-700 max-w-xs break-words" title="{{ $feedback->question }}">
                                             {{ Str::limit($feedback->question, 90, '...') }}
                                         </td>
-                                        
                                         <td class="px-6 py-4 text-sm text-gray-600 max-w-sm break-words" title="{{ $feedback->answer }}">
                                             {{ Str::limit($feedback->answer, 120, '...') }}
                                         </td>
-                                        
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                             @if(strtolower($feedback->feedback) === 'positive')
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
@@ -310,9 +326,12 @@
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
                                                     Unhelpful
                                                 </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+                                                    None
+                                                </span>
                                             @endif
                                         </td>
-                                        
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
                                             {{ $feedback->created_at ? \Carbon\Carbon::parse($feedback->created_at)->diffForHumans() : 'N/A' }}
                                         </td>
@@ -327,7 +346,6 @@
                             </tbody>
                         </table>
                     </div>
-                    
                     @if(method_exists($feedbacks, 'hasPages') && $feedbacks->hasPages())
                         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                             {{ $feedbacks->onEachSide(1)->links() }}
@@ -336,6 +354,51 @@
                 </div>
             </div>
 
+            <!-- Requests Per Domain Table (Last 7 Days) -->
+            <div class="mt-12" x-data="{ open: true }">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-xl font-bold text-gray-900">Requests Per Domain</h2>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            Past 7 Days
+                        </span>
+                    </div>
+                    <button @click="open = !open" class="text-xs font-semibold text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-md px-3 py-1.5 shadow-sm transition-colors cursor-pointer">
+                        <span x-text="open ? 'Hide Table' : 'Show Table'"></span>
+                    </button>
+                </div>
+                
+                <div x-show="open" x-transition class="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Requests</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse($requests_per_domain as $row)
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {{ $row->origin ?? 'Unknown' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-700">
+                                            {{ number_format($row->total_requests) }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="2" class="px-6 py-12 text-center text-sm text-gray-400">
+                                            No domain telemetry recorded in the past 7 days.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <!-- Origin Management & Embedding -->
             <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">

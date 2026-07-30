@@ -303,4 +303,26 @@ class Dashboard
             ->orderBy('created_at', 'DESC')
             ->paginate($perPage);
     }
+
+    public function getRequestsPerDomain(): array
+    {
+        Log::info('Fetching 7-day request counts per domain for admin dashboard.');
+
+        try {
+            return DB::table('generation_telemetries')
+                ->select('origin', DB::raw('COUNT(*) as total_requests'))
+                ->where('created_at', '>=', now()->subDays(7))
+                ->groupBy('origin')
+                ->orderBy('total_requests', 'DESC')
+                ->get()
+                ->toArray();
+        } catch (Exception $e) {
+            Log::error('Failed to fetch requests per domain for the last 7 days.', [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage()
+            ]);
+
+            return [];
+        }
+    }
 }

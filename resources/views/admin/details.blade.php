@@ -32,7 +32,14 @@
         <div class="px-8 py-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">LLM Generation Details</h1>
-                <p class="text-xs text-gray-500 font-mono mt-1">Session ID: {{ $conversation->session_id }}</p>
+                <div class="flex items-center gap-3 mt-1">
+                    <p class="text-xs text-gray-500 font-mono">Session ID: {{ $conversation->session_id }}</p>
+                    @if($conversation->telemetry->origin ?? false)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-800 font-mono">
+                            {{ $conversation->telemetry->origin }}
+                        </span>
+                    @endif
+                </div>
             </div>
             <a href="{{ url()->previous() }}" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">&larr; Back</a>
         </div>
@@ -140,16 +147,24 @@
                 </div>
             </div>
 
-            {{-- Categories --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100 flex justify-between items-center">
-                    <div>
-                        <span class="text-xs text-gray-400 font-semibold uppercase block">Main Category</span>
-                        <span class="text-gray-900 font-semibold mt-0.5 block">{{ $conversation->telemetry->main_category ?? 'N/A' }}</span>
+            {{-- Domain & Categorization --}}
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Domain & Taxonomy</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100 min-w-0">
+                        <span class="text-xs text-gray-400 font-semibold uppercase block">Request Domain</span>
+                        <span 
+                            class="text-gray-900 font-semibold mt-0.5 block text-sm truncate" 
+                            title="{{ $conversation->telemetry->origin ?? 'Unknown' }}"
+                        >
+                            {{ $conversation->telemetry->origin ?? 'Unknown' }}
+                        </span>
                     </div>
-                </div>
-                <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100 flex justify-between items-center">
-                    <div>
+                    <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100">
+                        <span class="text-xs text-gray-400 font-semibold uppercase block">Main Category</span>
+                        <span class="text-gray-900 font-semibold mt-0.5 block text-sm">{{ $conversation->telemetry->main_category ?? 'N/A' }}</span>
+                    </div>
+                    <div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100">
                         <span class="text-xs text-gray-400 font-semibold uppercase block">Child Category</span>
                         <span class="text-gray-900 font-medium mt-0.5 block text-sm">{{ $conversation->telemetry->child_category ?? 'N/A' }}</span>
                     </div>

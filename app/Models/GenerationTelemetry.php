@@ -10,6 +10,7 @@ class GenerationTelemetry extends Model
     protected $fillable = [
     'conversation_history_id',
     'user_input',
+    'origin',
     'rewritten_query',
     'rewrite_prompt_tokens',
     'rewrite_completion_tokens',

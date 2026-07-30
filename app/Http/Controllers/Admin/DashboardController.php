@@ -26,11 +26,12 @@ class DashboardController extends Controller
                 $this->dashboardService->getSyncMetrics(),
                 $this->dashboardService->getPipelineMetrics(),
                 [
-                    'latest_posts'    => $this->dashboardService->getLatestIndexedPosts(),
-                    'unindexed_posts' => $this->dashboardService->getLatestUnindexedPosts(),
-                    'failed_jobs'     => $this->dashboardService->getLatestFailedJobs(),
-                    'domains'         => AllowedDomain::orderBy('created_at', 'DESC')->get(),
-                    'feedbacks'       => $this->dashboardService->getPaginatedFeedback(5),
+                    'latest_posts'        => $this->dashboardService->getLatestIndexedPosts(),
+                    'unindexed_posts'     => $this->dashboardService->getLatestUnindexedPosts(),
+                    'failed_jobs'         => $this->dashboardService->getLatestFailedJobs(),
+                    'domains'             => AllowedDomain::orderBy('created_at', 'DESC')->get(),
+                    'feedbacks'           => $this->dashboardService->getPaginatedFeedback(5),
+                    'requests_per_domain' => $this->dashboardService->getRequestsPerDomain(),
                 ]
             );
         } catch (\Throwable $e) {
@@ -43,6 +44,7 @@ class DashboardController extends Controller
                 'failed_jobs'           => [],
                 'domains'               => [],
                 'feedbacks'             => [],
+                'requests_per_domain'   => [],
                 'error'                 => $e->getMessage(),
             ];
         }
