@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AllowedDomain;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Exception;
 
 class DomainManager
@@ -50,27 +51,33 @@ class DomainManager
     public function verify(string $token, string $incomingOrigin): bool
     {
         $cleanOrigin = Str::lower(rtrim($incomingOrigin, '/'));
+        
+        $cacheKey = "domain_token:{$token}";
+        $ttlInSeconds = 86400;
 
-        $domainRecord = AllowedDomain::where('token', $token)
-            ->where('is_active', true)
-            ->first();
+        $registeredDomain = Cache::driver('redis')->tags(['domain_tokens'])->remember($cacheKey, $ttlInSeconds, function () use ($token) {
+            $domainRecord = AllowedDomain::where('token', $token)
+                ->where('is_active', true)
+                ->first();
 
-        if (!$domainRecord) {
+            return $domainRecord ? $domainRecord->domain : null;
+        });
+
+        if (!$registeredDomain) {
             Log::warning('DomainManager: Verification aborted. Client token not found or inactive.', [
                 'token' => $token
             ]);
             return false;
         }
 
-        $registeredPattern = Str::lower($domainRecord->domain);
-
+        $registeredPattern = Str::lower($registeredDomain);
         $isMatch = Str::is($registeredPattern, $cleanOrigin);
 
         if (!$isMatch) {
             Log::warning('DomainManager: Verification rejected. Origin mismatch detected for token.', [
-                'registered_domain' => $domainRecord->domain,
-                'incoming_origin' => $cleanOrigin,
-                'token' => $token
+                'registered_domain' => $registeredDomain,
+                'incoming_origin'   => $cleanOrigin,
+                'token'             => $token
             ]);
             return false;
         }

@@ -15,7 +15,8 @@ class AllowedDomain extends Model
     protected static function booted()
     {
         $clearCorsCache = function () {
-            Cache::forget('cors_allowed_origins');
+            Cache::driver('redis')->forget('cors_allowed_origins');
+            Cache::driver('redis')->tags(['domain_tokens'])->flush();
         };
 
         static::saved($clearCorsCache);

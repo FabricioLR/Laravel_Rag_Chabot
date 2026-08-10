@@ -26,7 +26,7 @@ class CorsServiceProvider extends ServiceProvider
             return;
         }
         
-        $tableExists = Cache::remember('cors_table_exists', now()->addDays(1), function () {
+        $tableExists = Cache::driver('redis')->remember('cors_table_exists', now()->addDays(1), function () {
             return Schema::hasTable('allowed_domains');
         });
 
@@ -35,7 +35,7 @@ class CorsServiceProvider extends ServiceProvider
         }
 
         try {
-            $databaseOrigins = Cache::remember('cors_allowed_origins', now()->addMinutes(30), function () {
+            $databaseOrigins = Cache::driver('redis')->remember('cors_allowed_origins', now()->addDays(1), function () {
                 Log::info('CorsServiceProvider: Cache expired or missing. Fetching fresh domains from database.');
 
                 return AllowedDomain::where('is_active', true)
