@@ -77,7 +77,7 @@ export function useChatEngine(appUrl, clientToken) {
 
   useEffect(() => {
     if (sessionId) syncAndInitialize();
-  }, [sessionId]);
+  }, [sessionId, isOpen]);
 
   const updateState = (step, filters = null) => {
     setCurrentStep(step);
@@ -90,6 +90,7 @@ export function useChatEngine(appUrl, clientToken) {
   };
 
   const syncAndInitialize = async () => {
+    if (!isOpen) return
     try {
       const historyRes = await fetch(`${appUrl}/api/chat/history/${sessionId}`, {
         headers: { 'Accept': 'application/json', 'X-Client-Token': clientToken, 'Content-Type': 'application/json; charset=UTF-8' }
