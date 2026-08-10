@@ -326,6 +326,7 @@ class Dashboard
                 ->where('created_at', '>=', now()->subDays(7))
                 ->groupBy('origin')
                 ->orderBy('total_requests', 'DESC')
+                ->limit(5)
                 ->get()
                 ->toArray();
         } catch (Exception $e) {

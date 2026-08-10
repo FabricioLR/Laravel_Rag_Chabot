@@ -11,7 +11,7 @@ return [
     */
     
     'session' => [
-        'expiration_minutes' => env('SESSION_EXPIRATION_MINUTES', 45),
+        'expiration_hours' => env('SESSION_EXPIRATION_HOURS', 45),
     ],
 
 ];

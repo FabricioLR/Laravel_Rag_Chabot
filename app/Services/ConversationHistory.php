@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ConversationHistory as ConversationHistoryModel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use App\Exceptions\SessionExpiredException;
 use Carbon\Carbon;
 
@@ -17,6 +18,8 @@ class ConversationHistory
             'question'   => $question,
             'answer'     => $answer,
         ]);
+
+        Cache::driver('redis')->forget("widget:messages:{$sessionId}");
 
         return $record->id;
     }
@@ -51,44 +54,48 @@ class ConversationHistory
 
     public function getMessagesForWidget(string $sessionId): Collection
     {
-        $expirationMinutes = (int) config('api.session.expiration_minutes', env('SESSION_EXPIRATION_MINUTES', 45));
-
+        $expirationHours = (int) config('api.session.expiration_hours', env('SESSION_EXPIRATION_HOURS', 3));
         $lastInteraction = ConversationHistoryModel::where('session_id', $sessionId)
             ->latest('updated_at')
             ->first();
 
         if ($lastInteraction) {
             $lastActiveTime = Carbon::parse($lastInteraction->updated_at);
-            
-            if ($lastActiveTime->diffInMinutes(now()) >= $expirationMinutes) {
+
+            if ($lastActiveTime->diffInHours(now()) >= $expirationHours) {
                 throw new SessionExpiredException('Session has expired due to inactivity.');
             }
         }
 
-        $interactions = ConversationHistoryModel::where('session_id', $sessionId)
-            ->orderBy('id', 'asc')
-            ->limit(5)
-            ->get();
+        $cacheKey = "widget:messages:{$sessionId}";
+        $ttlInSeconds = $expirationHours * 60 * 60;
 
-        $messages = collect();
+        return Cache::driver('redis')->remember($cacheKey, $ttlInSeconds, function () use ($sessionId) {
+            $interactions = ConversationHistoryModel::where('session_id', $sessionId)
+                ->orderBy('id', 'asc')
+                ->limit(5)
+                ->get();
 
-        foreach ($interactions as $interaction) {
-            $messages->push([
-                'id'       => $interaction->id,
-                'feedback' => $interaction->feedback ?? null,
-                'text'     => $interaction->question,
-                'sender'   => 'user'
-            ]);
+            $messages = collect();
 
-            $messages->push([
-                'id'       => $interaction->id,
-                'feedback' => $interaction->feedback ?? null,
-                'text'     => $interaction->answer,
-                'sender'   => 'bot'
-            ]);
-        }
+            foreach ($interactions as $interaction) {
+                $messages->push([
+                    'id'       => $interaction->id,
+                    'feedback' => $interaction->feedback ?? null,
+                    'text'     => $interaction->question,
+                    'sender'   => 'user',
+                ]);
 
-        return $messages;
+                $messages->push([
+                    'id'       => $interaction->id,
+                    'feedback' => $interaction->feedback ?? null,
+                    'text'     => $interaction->answer,
+                    'sender'   => 'bot',
+                ]);
+            }
+
+            return $messages;
+        });
     }
 
     public function updateFeedback(int $conversationId, string $feedbackValue): bool

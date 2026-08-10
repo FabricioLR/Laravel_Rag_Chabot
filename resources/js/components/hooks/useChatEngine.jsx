@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 
-const minutes = Number(import.meta.env.VITE_SESSION_EXPIRATION_MINUTES) || 45;
-const SESSION_EXPIRATION_MS = minutes * 60 * 1000;
+const hours = Number(import.meta.env.VITE_SESSION_EXPIRATION_HOURS) || 3;
+const SESSION_EXPIRATION_MS = hours * 60 * 60 * 1000;
 
 const CHAT_STRINGS = {
   INITIAL_MESSAGE: "Olá! Seja bem-vindo ao Transnet IA. 🤖<br>Como posso te ajudar hoje?",

@@ -14,6 +14,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - dev
 
   db:
     image: pgvector/pgvector:pg15
@@ -31,6 +33,29 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+    networks:
+      - dev
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: laravel_redis_dev
+    restart: unless-stopped
+    command: redis-server --requirepass dev --save 60 1
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "dev", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - dev
+
+networks:
+  dev:
+    driver: bridge
 
 volumes:
   pg_data:
+  redis_data:
