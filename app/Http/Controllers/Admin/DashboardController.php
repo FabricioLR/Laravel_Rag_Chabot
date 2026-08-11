@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClientToken;
+use App\Models\ConversationHistory;
 use App\Services\Dashboard;
 use App\Services\DomainManager;
-use App\Models\AllowedDomain;
-use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use App\Models\ConversationHistory;
+use Illuminate\Http\Request;
 use Throwable;
 
 class DashboardController extends Controller
@@ -31,12 +31,12 @@ class DashboardController extends Controller
                     'latest_posts'        => $this->dashboardService->getLatestIndexedPosts(),
                     'unindexed_posts'     => $this->dashboardService->getLatestUnindexedPosts(),
                     'failed_jobs'         => $this->dashboardService->getLatestFailedJobs(),
-                    'domains'             => AllowedDomain::orderBy('created_at', 'DESC')->get(),
+                    'tokens'              => ClientToken::with('allowedDomains')->orderBy('created_at', 'DESC')->get(),
                     'feedbacks'           => $this->dashboardService->getPaginatedFeedback(5, $search),
                     'requests_per_domain' => $this->dashboardService->getRequestsPerDomain(),
                 ]
             );
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $data = [
                 'total_wordpress_posts' => 0,
                 'indexed_posts_count'   => 0,
@@ -44,7 +44,7 @@ class DashboardController extends Controller
                 'latest_posts'          => [],
                 'unindexed_posts'       => [],
                 'failed_jobs'           => [],
-                'domains'               => [],
+                'tokens'                => [],
                 'feedbacks'             => [],
                 'requests_per_domain'   => [],
                 'error'                 => $e->getMessage(),
@@ -54,26 +54,54 @@ class DashboardController extends Controller
         return view('admin.dashboard', $data);
     }
 
-    public function details($id)
+    public function details($id): View
     {
         $conversation = ConversationHistory::with('telemetry')->findOrFail($id);
 
         return view('admin.details', compact('conversation'));
     }
 
-    public function storeDomain(Request $request): RedirectResponse
+    public function storeToken(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'domain' => 'required|unique:allowed_domains,domain'
         ]);
 
         try {
-            $this->domainManager->register(
-                $request->input('name'), 
+            $this->domainManager->createToken($request->input('name'));
+
+            return redirect()->back()->with('success', 'Client token created successfully!');
+        } catch (Throwable $th) {
+            return redirect()->back()->withErrors(['token' => $th->getMessage()]);
+        }
+    }
+
+    public function deleteToken($id): RedirectResponse
+    {
+        try {
+            $token = ClientToken::findOrFail((int) $id);
+            $token->delete();
+
+            return redirect()->back()->with('success', 'Client token and associated domains deleted!');
+        } catch (Throwable $th) {
+            return redirect()->back()->withErrors(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function storeDomain(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'client_token_id' => 'required|exists:client_tokens,id',
+            'domain'          => 'required|string',
+        ]);
+
+        try {
+            $this->domainManager->addDomain(
+                (int) $request->input('client_token_id'),
                 $request->input('domain')
             );
-            return redirect()->back()->with('success', 'Domain added successfully!');
+
+            return redirect()->back()->with('success', 'Domain attached to token successfully!');
         } catch (Throwable $th) {
             return redirect()->back()->withErrors(['domain' => $th->getMessage()]);
         }
@@ -82,10 +110,29 @@ class DashboardController extends Controller
     public function deleteDomain($id): RedirectResponse
     {
         try {
-            $this->domainManager->revoke((int)$id);
+            $this->domainManager->revokeDomain((int) $id);
+
             return redirect()->back()->with('success', 'Domain removed successfully!');
         } catch (Throwable $th) {
             return redirect()->back()->withErrors(['error' => $th->getMessage()]);
+        }
+    }
+
+    public function updateToken(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'name'    => 'required|string',
+        ]);
+
+        try {
+            $this->domainManager->updateToken(
+                (int) $id,
+                $request->input('name')
+            );
+
+            return redirect()->back()->with('success', 'Client token updated successfully!');
+        } catch (Throwable $th) {
+            return redirect()->back()->withErrors(['domain' => $th->getMessage()]);
         }
     }
 }

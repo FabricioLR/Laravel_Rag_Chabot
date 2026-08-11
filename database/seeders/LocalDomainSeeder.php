@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\AllowedDomain;
+use App\Models\ClientToken;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -28,12 +29,19 @@ class LocalDomainSeeder extends Seeder
             return;
         }
 
+        $clientToken = ClientToken::updateOrCreate(
+            ['token' => $token],
+            [
+                'name' => 'Local',
+                'is_active' => true
+            ]
+        );
+
         AllowedDomain::updateOrCreate(
             ['domain' => rtrim($url, '/')],
             [
-                'name' => 'Local Widget Access',
+                'client_token_id' => $clientToken->id,
                 'domain' => rtrim($url, '/'),
-                'token' => $token,
                 'is_active' => true
             ]
         );

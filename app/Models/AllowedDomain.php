@@ -4,13 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AllowedDomain extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'domain', 'token', 'is_active'];
+    protected $fillable = ['client_token_id', 'domain', 'is_active'];
+
+    public function clientToken(): BelongsTo
+    {
+        return $this->belongsTo(ClientToken::class);
+    }
 
     protected static function booted()
     {
@@ -20,10 +25,7 @@ class AllowedDomain extends Model
         };
 
         static::saved($clearCorsCache);
+        static::updated($clearCorsCache);
         static::deleted($clearCorsCache);
-
-        static::creating(function ($allowedDomain) {
-            $allowedDomain->token = Str::random(32);
-        });
     }
 }

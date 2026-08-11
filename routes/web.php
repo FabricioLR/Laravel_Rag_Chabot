@@ -21,6 +21,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
+    Route::post('/tokens', [DashboardController::class, 'storeToken'])->name('admin.tokens.store');
+    Route::delete('/tokens/{id}', [DashboardController::class, 'deleteToken'])->name('admin.tokens.delete');
+    Route::put('/tokens/{id}', [DashboardController::class, 'updateToken'])->name('admin.tokens.update');
+
     Route::post('/domains', [DashboardController::class, 'storeDomain'])->name('admin.domains.store');
     Route::delete('/domains/{id}', [DashboardController::class, 'deleteDomain'])->name('admin.domains.delete');
 

@@ -3,85 +3,128 @@
 namespace App\Services;
 
 use App\Models\AllowedDomain;
+use App\Models\ClientToken;
+use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
-use Exception;
 
 class DomainManager
 {
-    public function register(string $name, string $url): AllowedDomain
+    public function createToken(string $name, ?string $customToken = null): ClientToken
     {
-        Log::info('DomainManager: Registering new allowed domain origin.', [
-            'name' => $name,
-            'url' => $url
-        ]);
+        Log::info('DomainManager: Creating new client token.', ['name' => $name]);
 
         try {
-            $cleanUrl = rtrim($url, '/');
-
-            return AllowedDomain::create([
-                'name' => $name,
-                'domain' => $cleanUrl,
-                'is_active' => true
+            return ClientToken::create([
+                'name'      => $name,
+                'token'     => $customToken ?? Str::random(40),
+                'is_active' => true,
             ]);
         } catch (Exception $e) {
-            Log::error('DomainManager: Failed to register domain.', [
-                'error' => $e->getMessage()
+            Log::error('DomainManager: Failed to create client token.', ['error' => $e->getMessage()]);
+            throw new Exception('Could not create client token: ' . $e->getMessage());
+        }
+    }
+    public function addDomain(int $clientTokenId, string $url): AllowedDomain
+    {
+        Log::info("DomainManager: Adding domain to token ID [{$clientTokenId}].", ['url' => $url]);
+
+        try {
+            $token = ClientToken::findOrFail($clientTokenId);
+            $cleanUrl = rtrim($url, '/');
+
+            $domain = $token->allowedDomains()->create([
+                'domain'    => $cleanUrl,
+                'is_active' => true,
             ]);
-            throw new Exception('Could not register domain: ' . $e->getMessage());
+
+            return $domain;
+        } catch (Exception $e) {
+            Log::error("DomainManager: Failed to add domain to token ID [{$clientTokenId}].", [
+                'error' => $e->getMessage(),
+            ]);
+            throw new Exception('Could not add domain: ' . $e->getMessage());
+        }
+    }
+    public function revokeDomain(int $domainId): bool
+    {
+        Log::info("DomainManager: Revoking domain ID [{$domainId}].");
+
+        try {
+            $domain = AllowedDomain::findOrFail($domainId);
+
+            $deleted = (bool)$domain->delete();
+
+            return $deleted;
+        } catch (Exception $e) {
+            Log::error("DomainManager: Failed to revoke domain ID [{$domainId}].", [
+                'error' => $e->getMessage(),
+            ]);
+            throw new Exception('Could not complete domain revocation.');
         }
     }
 
-    public function revoke(int $id): bool
+    public function updateToken(int $tokenId, string $name): ClientToken
     {
-        Log::info("DomainManager: Revoking domain access profile ID [{$id}].");
+        Log::info("DomainManager: Updating client token ID [{$tokenId}].", [
+            'name'       => $name,
+        ]);
 
         try {
-            $domain = AllowedDomain::findOrFail($id);
-            return (bool)$domain->delete();
-        } catch (Exception $e) {
-            Log::error("DomainManager: Failed to revoke domain access profile ID [{$id}].", [
-                'error' => $e->getMessage()
+            $token = ClientToken::findOrFail($tokenId);
+
+            $token->update([
+                'name'    => $name,
             ]);
-            throw new Exception('Could not complete domain revocation processing.');
+
+            return $token;
+        } catch (Exception $e) {
+            Log::error("DomainManager: Failed to update client token ID [{$tokenId}].", [
+                'error' => $e->getMessage(),
+            ]);
+            throw new Exception('Could not update client token: ' . $e->getMessage());
         }
     }
 
     public function verify(string $token, string $incomingOrigin): bool
     {
         $cleanOrigin = Str::lower(rtrim($incomingOrigin, '/'));
-        
         $cacheKey = "domain_token:{$token}";
         $ttlInSeconds = 86400;
 
-        $registeredDomain = Cache::driver('redis')->tags(['domain_tokens'])->remember($cacheKey, $ttlInSeconds, function () use ($token) {
-            $domainRecord = AllowedDomain::where('token', $token)
+        $registeredDomains = Cache::driver('redis')->tags(['domain_tokens'])->remember($cacheKey, $ttlInSeconds, function () use ($token) {
+            return AllowedDomain::whereHas('clientToken', function ($query) use ($token) {
+                    $query->where('token', $token)->where('is_active', true);
+                })
                 ->where('is_active', true)
-                ->first();
-
-            return $domainRecord ? $domainRecord->domain : null;
+                ->pluck('domain')
+                ->toArray();
         });
 
-        if (!$registeredDomain) {
-            Log::warning('DomainManager: Verification aborted. Client token not found or inactive.', [
-                'token' => $token
+        if (empty($registeredDomains)) {
+            Log::warning('DomainManager: Verification aborted. Client token not found, inactive, or has no assigned domains.', [
+                'token' => $token,
             ]);
             return false;
         }
 
-        $registeredPattern = Str::lower($registeredDomain);
-        $isMatch = Str::is($registeredPattern, $cleanOrigin);
+        $hostOnly = parse_url($cleanOrigin, PHP_URL_HOST) ?? $cleanOrigin;
 
-        if (!$isMatch) {
-            Log::warning('DomainManager: Verification rejected. Origin mismatch detected for token.', [
-                'registered_domain' => $registeredDomain,
-                'incoming_origin'   => $cleanOrigin,
-                'token'             => $token
-            ]);
-            return false;
+        foreach ($registeredDomains as $domainPattern) {
+            $pattern = Str::lower(rtrim($domainPattern, '/'));
+
+            if (Str::is($pattern, $cleanOrigin) || Str::is($pattern, $hostOnly)) {
+                return true;
+            }
         }
 
-        return true;
+        Log::warning('DomainManager: Verification rejected. Origin mismatch detected for token.', [
+            'allowed_domains' => $registeredDomains,
+            'incoming_origin' => $cleanOrigin,
+            'token'           => $token,
+        ]);
+
+        return false;
     }
 }

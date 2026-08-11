@@ -14,8 +14,6 @@ class VerifyCors
 {
     public function handle(Request $request, Closure $next): Response
     {
-
-        Log::info("verify cors middleware called");
         $origin = $request->header('Origin') ?? $request->header('Referer');
 
         $cleanOrigin = Str::lower(rtrim($origin, '/'));
@@ -56,6 +54,10 @@ class VerifyCors
 
     private function isOriginAllowed(string $origin, array $patterns): bool
     {
+        if (empty($origin)) {
+            return false;
+        }
+
         $hostOnly = parse_url($origin, PHP_URL_HOST) ?? $origin;
 
         foreach ($patterns as $pattern) {
@@ -74,6 +76,9 @@ class VerifyCors
                 Log::info('VerifyCors: Cache expired or missing. Fetching fresh domains from database.');
 
                 return AllowedDomain::where('is_active', true)
+                    ->whereHas('clientToken', function ($query) {
+                        $query->where('is_active', true);
+                    })
                     ->pluck('domain')
                     ->toArray();
             });

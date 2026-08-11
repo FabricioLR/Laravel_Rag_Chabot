@@ -8,6 +8,48 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans antialiased text-gray-800" x-data="{ refreshing: false }">
+    <div class="fixed top-5 right-5 z-50 space-y-3 max-w-sm w-full pointer-events-none">
+        @if(isset($error) || $errors->any())
+            <div x-data="{ show: true }" 
+                 x-show="show" 
+                 x-init="setTimeout(() => show = false, 5000)"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-x-2"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-2"
+                 class="pointer-events-auto bg-slate-800 border-l-4 border-rose-500 p-4 rounded-lg shadow-2xl flex items-start space-x-3 border border-slate-700">
+                <svg class="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-slate-200">Warning: Action encountered errors.</p>
+                    <p class="text-xs text-rose-400 mt-0.5">{{ $error ?? $errors->first() }}</p>
+                </div>
+                <button @click="show = false" class="text-slate-400 hover:text-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+        @endif
+        
+        @if (session('success'))
+            <div x-data="{ show: true }" 
+                 x-show="show" 
+                 x-init="setTimeout(() => show = false, 5000)"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-x-2"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-2"
+                 class="pointer-events-auto bg-slate-800 border-l-4 border-emerald-500 p-4 rounded-lg shadow-2xl flex items-start space-x-3 border border-slate-700">
+                <svg class="w-5 h-5 flex-shrink-0 text-emerald-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="flex-1">
+                    <p class="text-sm font-semibold text-slate-200">Success</p>
+                    <p class="text-xs text-emerald-400 mt-0.5">{{ session('success') }}</p>
+                </div>
+                <button @click="show = false" class="text-slate-400 hover:text-slate-200"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+        @endif
+
+    </div>
 
     <div class="min-h-screen flex flex-col">
         <!-- Top Navigation -->
@@ -37,7 +79,7 @@
         </nav>
 
         <main class="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-8">
-            
+
             <!-- Header Section with Actions -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-gray-200 gap-4">
                 <div>
@@ -447,50 +489,111 @@
             </div>
             <!-- Origin Management & Embedding -->
             <div class="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-fit">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Register New Origin Domain</h2>
-                    <form action="{{ route('admin.domains.store') }}" method="POST">
-                        @csrf
-                        <div class="mb-4">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Friendly Site Name</label>
-                            <input type="text" name="name" required placeholder="e.g. Acme Production Portal" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Origin URL</label>
-                            <input type="url" name="domain" required placeholder="https://example.com" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
-                        </div>
-                        <button type="submit" class="w-full text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded transition-colors shadow-sm">
-                            Authorize Access Origin
-                        </button>
-                    </form>
+                <!-- Left Column: Management Forms -->
+                <div class="space-y-6 h-fit">
+                    <!-- Form 1: Create New Client Token -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Create Client Token</h2>
+                        <form action="{{ route('admin.tokens.store') }}" method="POST">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Client Name</label>
+                                <input type="text" name="name" required placeholder="e.g. Acme Corp Portal" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
+                            </div>
+                            <button type="submit" class="w-full text-sm bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 px-4 rounded transition-colors shadow-sm">
+                                Generate Client Token
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Form 2: Register New Origin Domain -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Register Origin Domain</h2>
+                        <form action="{{ route('admin.domains.store') }}" method="POST">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Select Client Token</label>
+                                <select name="client_token_id" required class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
+                                    <option value="" disabled selected>-- Select an Active Token --</option>
+                                    @foreach($tokens as $token)
+                                        <option value="{{ $token->id }}">{{ $token->name }} ({{ Str::limit($token->token, 12) }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Origin URL / Pattern</label>
+                                <input type="url" name="domain" required placeholder="https://app.example.com" class="w-full text-sm border-gray-300 rounded-md bg-gray-50 p-2.5 focus:outline-emerald-500 border">
+                            </div>
+                            <button type="submit" class="w-full text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded transition-colors shadow-sm">
+                                Attach Domain to Token
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
+                <!-- Right Column: Table Listing Tokens and Associated Domains -->
                 <div class="lg:col-span-2 bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-                        <h2 class="text-lg font-bold text-gray-900">Authorized Embedding Environments</h2>
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-gray-900">Authorized Domains</h2>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target Client</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Domain Link</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Snippet Actions</th>
-                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revoke</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client Token</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Allowed Domains</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Snippet</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Manage</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($domains as $dom)
-                                    <tr class="hover:bg-gray-50/60 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $dom->name }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">{{ $dom->domain }}</td>
+                                @forelse($tokens as $token)
+                                    <tr class="hover:bg-gray-50/60 transition-colors align-top">
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                            <div>{{ $token->name }}</div>
+                                            <div class="text-xs font-mono text-gray-400 mt-0.5">{{ Str::limit($token->token, 16) }}</div>
+                                            @if(!$token->is_active)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">Disabled Token</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-sm font-mono text-gray-500">
+                                            @if($token->allowedDomains->isEmpty())
+                                                <span class="text-xs text-gray-400 italic">No domains assigned</span>
+                                            @else
+                                                <ul class="space-y-2">
+                                                    @foreach($token->allowedDomains as $dom)
+                                                        <li class="flex items-center justify-between group">
+                                                            <span>
+                                                                {{ $dom->domain }}
+                                                                @if(!$dom->is_active)
+                                                                    <span class="ml-1 text-xs text-red-600">(Disabled)</span>
+                                                                @endif
+                                                            </span>
+                                                            <form action="{{ route('admin.domains.delete', $dom->id) }}" method="POST" class="inline-block ml-2" onsubmit="return confirm('Revoke this origin domain?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">Remove</button>
+                                                            </form>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <button onclick="openSnippetModal('{{ $dom->name }}', '{{ $dom->domain }}', '{{ $dom->token }}')" class="inline-flex items-center text-xs bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-all border border-gray-200 cursor-pointer">
+                                            <button onclick="openSnippetModal('{{ addslashes($token->name) }}', '{{ $token->token }}')" 
+                                                    class="inline-flex items-center text-xs bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-all border border-gray-200 cursor-pointer">
                                                 Code Snippet
                                             </button>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                            <form action="{{ route('admin.domains.delete', $dom->id) }}" method="POST" onsubmit="return confirm('Revoking this origin will instantly disconnect its running chatbot service. Continue?');">
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-3">
+                                            <button 
+                                                type="button" 
+                                                onclick="openEditTokenModal('{{ $token->id }}', '{{ addslashes($token->name) }}')" 
+                                                class="text-indigo-600 hover:text-indigo-900 text-xs font-semibold cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                            <form action="{{ route('admin.tokens.delete', $token->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Revoking this token will disconnect all its assigned domains. Continue?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-semibold cursor-pointer">Delete</button>
@@ -499,12 +602,38 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">No external client origins registered yet.</td>
+                                        <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-400">No client tokens or origins registered yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div id="editTokenModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden border border-gray-100">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-base font-bold text-gray-900">Edit Client Token</h3>
+                        <button type="button" onclick="closeEditTokenModal()" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+                    </div>
+                    
+                    <form id="editTokenForm" method="POST" action="">
+                        @csrf
+                        @method('PUT')
+                        
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label for="edit_token_name" class="block text-xs font-medium text-gray-700 uppercase">Client Name</label>
+                                <input type="text" name="name" id="edit_token_name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border">
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-3 bg-gray-50 text-right space-x-2">
+                            <button type="button" onclick="closeEditTokenModal()" class="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                            <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow-sm">Save Changes</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -554,7 +683,22 @@
 
             <!-- Scripts -->
             <script>
-            function openSnippetModal(name, domain, token) {
+            function openEditTokenModal(id, name) {
+                const modal = document.getElementById('editTokenModal');
+                const form = document.getElementById('editTokenForm');
+                
+                form.action = `/admin/tokens/${id}`;
+                
+                document.getElementById('edit_token_name').value = name;
+                
+                modal.classList.remove('hidden');
+            }
+
+            function closeEditTokenModal() {
+                document.getElementById('editTokenModal').classList.add('hidden');
+            }
+
+            function openSnippetModal(name, token) {
                 const modal = document.getElementById('snippetModal');
                 const title = document.getElementById('modalTitle');
                 const codeBlock = document.getElementById('codeBlock');
