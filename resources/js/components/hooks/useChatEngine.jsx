@@ -97,12 +97,13 @@ export function useChatEngine(appUrl, clientToken) {
       });
 
       if (historyRes.status === 401) {
-        throw new Error(`Session expired or invalid (Status: ${historyRes.status})`);
-      } else if (historyRes.status === 429){
+        let currentSessionId = crypto.randomUUID();
+        localStorage.setItem('chat_widget_session', currentSessionId);
+        setSessionId(currentSessionId);
         return;
       } else if (!historyRes.ok) {
         return;
-      }
+      } 
       
       const historyData = historyRes.ok ? await historyRes.json() : { messages: [] };
       
@@ -116,11 +117,7 @@ export function useChatEngine(appUrl, clientToken) {
       setMessages([...formattedHistory, { text: CHAT_STRINGS.INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
       setActiveOptions([{ name: 'Filtrar por módulo', value: 'Filtrar por módulo', type: "categories" }]);
     } catch (error) {
-      console.warn("Session expired or request failed. Resetting session ID...", error);
 
-      let currentSessionId = crypto.randomUUID();
-      localStorage.setItem('chat_widget_session', currentSessionId);
-      setSessionId(currentSessionId);
     }
   };
 

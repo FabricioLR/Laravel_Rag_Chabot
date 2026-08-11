@@ -573,7 +573,7 @@
                                     `    data-position-right="20px"\n` +
                                     `    data-button-width="60px"\n` +
                                     `    data-button-height="60px"\n` +
-                                    `    charset="UTF-8">\n` +
+                                    `    charset="UTF-8"\n` +
                                     `<\/script>`;
                     
                 modal.classList.remove('hidden');
