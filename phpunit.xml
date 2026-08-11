@@ -46,6 +46,13 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
 
+        <env name="REDIS_CLIENT" value="phpredis"/>
+        <env name="REDIS_HOST" value="redis"/>
+        <env name="REDIS_PASSWORD" value="test"/>
+        <env name="REDIS_PORT" value="6379"/>
+        <env name="REDIS_DB" value="0"/>
+        <env name="REDIS_PERSISTENT" value="true"/>
+
         <env name="HUGGINGFACE_API_KEY" value="teste"/>
         <env name="GROQ_API_KEY" value="teste"/>
     </php>

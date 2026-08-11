@@ -21,11 +21,14 @@ class VerifyCors
         $cleanOrigin = Str::lower(rtrim($origin, '/'));
 
         $allowedOrigins = $this->getAllowedOrigins();
-
         $defaultOrigins = config('cors.allowed_origins', []);
-        $allOrigins = array_map(fn($o) => Str::lower(rtrim($o, '/')), array_merge($defaultOrigins, $allowedOrigins));
+        
+        $allPatterns = array_map(
+            fn($o) => Str::lower(rtrim($o, '/')), 
+            array_merge($defaultOrigins, $allowedOrigins)
+        );
 
-        $isAllowed = in_array($cleanOrigin, $allOrigins, true);
+        $isAllowed = $this->isOriginAllowed($cleanOrigin, $allPatterns);
 
         if ($request->isMethod('OPTIONS')) {
             if ($isAllowed) {
@@ -49,6 +52,19 @@ class VerifyCors
         }
 
         return $response;
+    }
+
+    private function isOriginAllowed(string $origin, array $patterns): bool
+    {
+        $hostOnly = parse_url($origin, PHP_URL_HOST) ?? $origin;
+
+        foreach ($patterns as $pattern) {
+            if (Str::is($pattern, $origin) || Str::is($pattern, $hostOnly)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function getAllowedOrigins(): array

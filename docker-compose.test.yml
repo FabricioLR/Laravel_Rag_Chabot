@@ -28,6 +28,20 @@ services:
     networks:
       - test
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: laravel_redis_test
+    restart: unless-stopped
+    command: redis-server --requirepass test --save 60 1
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "test", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - test
+      
 networks:
   test:
     driver: bridge
