@@ -563,8 +563,8 @@
                                                 <ul class="space-y-2">
                                                     @foreach($token->allowedDomains as $dom)
                                                         <li class="flex items-center justify-between group">
-                                                            <span>
-                                                                {{ $dom->domain }}
+                                                            <span title="{{  $dom->domain }}">
+                                                                {{  Str::limit($dom->domain, 20) }}
                                                                 @if(!$dom->is_active)
                                                                     <span class="ml-1 text-xs text-red-600">(Disabled)</span>
                                                                 @endif
@@ -608,6 +608,54 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- Help Requests Section -->
+            <div class="mt-8 bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Recent Support Requests</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Latest 5 messages received via the help form</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ count($help ?? []) }} Messages
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User / Company</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Received At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($help as $item)
+                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <div class="font-semibold">{{ $item->name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $item->company_name }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 max-w-md break-words" title="{{ $item->description }}">
+                                        {{ Str::limit($item->description, 120) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-xs text-gray-400">
+                                        {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '-' }}
+                                        <div class="text-[10px] text-gray-400 mt-0.5">{{ $item->created_at ? $item->created_at->diffForHumans() : '' }}</div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-400">
+                                        No help messages recorded yet.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

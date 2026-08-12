@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClientToken;
 use App\Models\ConversationHistory;
+use App\Models\HelpRequest;
 use App\Services\Dashboard;
 use App\Services\DomainManager;
 use Illuminate\Contracts\View\View;
@@ -34,6 +35,7 @@ class DashboardController extends Controller
                     'tokens'              => ClientToken::with('allowedDomains')->orderBy('created_at', 'DESC')->get(),
                     'feedbacks'           => $this->dashboardService->getPaginatedFeedback(5, $search),
                     'requests_per_domain' => $this->dashboardService->getRequestsPerDomain(),
+                    'help' => HelpRequest::orderBy('created_at', 'DESC')->limit(5)->get(),
                 ]
             );
         } catch (Throwable $e) {
@@ -47,6 +49,7 @@ class DashboardController extends Controller
                 'tokens'                => [],
                 'feedbacks'             => [],
                 'requests_per_domain'   => [],
+                'help'                  => [],
                 'error'                 => $e->getMessage(),
             ];
         }

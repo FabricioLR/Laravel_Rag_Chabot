@@ -13,7 +13,7 @@ const CHAT_STRINGS = {
   CONNECTION_ERROR: "Desculpe, estou com problemas para me conectar no momento.",
   INPUT_PLACEHOLDER_ACTIVE: "Digite uma mensagem...",
   INPUT_PLACEHOLDER_DISABLED: "Selecione uma opção acima...",
-  DEFAULT_CATEGORY_NOTICE: "Como você enviou uma pergunta direta, prosseguiremos utilizando a categoria **Geral**.",
+  DEFAULT_CATEGORY_NOTICE: "Prosseguiremos utilizando a categoria **Geral**.",
   
   SUBCATEGORY_PROMPT: (categoryName) => `Combinado! O que você precisa resolver em **${categoryName}**? Selecione uma das opções:`
 };
@@ -115,7 +115,10 @@ export function useChatEngine(appUrl, clientToken) {
         isApi: msg.sender === 'bot'
       }));
       setMessages([...formattedHistory, { text: CHAT_STRINGS.INITIAL_MESSAGE, sender: 'bot', isApi: false }]);
-      setActiveOptions([{ name: 'Filtrar por módulo', value: 'Filtrar por módulo', type: "categories" }]);
+      setActiveOptions([
+        { name: 'Filtrar por módulo', value: 'Filtrar por módulo', type: "categories" }, 
+        { name: 'Ajuda', value: 'Ajuda', type: "help" }
+      ]);
     } catch (error) {
 
     }
@@ -225,6 +228,12 @@ export function useChatEngine(appUrl, clientToken) {
     } else if (type == "try-again"){
       setMessages(prev => [...prev, { text: overrideValue, sender: 'user', isApi: false }]);
       await runStateEngine(overrideLabel);
+    } else if (type == "help"){
+      setMessages(prev => [...prev, { 
+        text: `Para informações sobre como utilizar o Assistente Virtual, acesse o nosso [Guia de Utilização](${appUrl}/help/instructions).`, 
+        sender: 'bot', 
+        isApi: false 
+      }]);
     } else if (type == "categories"){
       setActiveOptions([])
       setMessages(prev => [...prev, { text: "Selecione o módulo que você deseja consultar:", sender: 'bot', isApi: false }]);

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\HelpController;
 use Illuminate\Support\Facades\Route;
 
 if (config('admin.widget.enabled', env('ENABLE_LOCAL_WIDGET')) == true) {
@@ -9,6 +10,9 @@ if (config('admin.widget.enabled', env('ENABLE_LOCAL_WIDGET')) == true) {
         return view('local');
     })->name('local');
 }
+
+Route::get("/help/instructions", [HelpController::class, 'index'])->name('help');
+Route::post("/help/contact", [HelpController::class, 'contact'])->name('contact');
 
 Route::middleware('guest')->prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

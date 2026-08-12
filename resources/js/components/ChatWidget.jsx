@@ -22,6 +22,7 @@ export default function ChatWidget({
       {chat.isOpen ? (
         <div className="cb:flex cb:flex-col cb:w-[380px] cb:h-[500px] cb:bg-white cb:rounded-2xl cb:shadow-[0_8px_30px_rgb(0,0,0,0.12)] cb:overflow-hidden cb:mb-4 cb:border cb:border-[#e2edf8]">
           <ChatHeader 
+            appUrl={appUrl} 
             currentStep={chat.currentStep} 
             onReset={chat.handleReset} 
             onClose={() => chat.setIsOpen(false)} 
