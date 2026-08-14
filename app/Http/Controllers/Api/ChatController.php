@@ -46,8 +46,10 @@ class ChatController extends Controller
 
     public function history(Request $request, string $sessionId): JsonResponse
     {
+        $token = $request->header('X-Client-Token') ?? $request->input('token');
+
         try {
-            $messages = $this->historyService->getMessagesForWidget($sessionId);
+            $messages = $this->historyService->getMessagesForWidget($sessionId, $token);
 
             return response()->json([
                 'messages' => $messages

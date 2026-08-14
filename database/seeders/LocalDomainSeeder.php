@@ -18,11 +18,6 @@ class LocalDomainSeeder extends Seeder
     {
         $url = config('app.url', env('APP_URL'));
         $token = config('admin.widget.token', env('LOCAL_WIDGET_TOKEN'));
-        
-        if (config('admin.widget.enabled', env('ENABLE_LOCAL_WIDGET')) != true){
-            Log::warning('Local widget is disabled');
-            return;
-        }
 
         if (!$url || !$token) {
             Log::warning('LocalDomainSeeder skipped: APP_URL or LOCAL_WIDGET_TOKEN environment variables are not set.');

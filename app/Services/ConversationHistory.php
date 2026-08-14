@@ -52,9 +52,11 @@ class ConversationHistory
         return $formatted;
     }
 
-    public function getMessagesForWidget(string $sessionId): Collection
+    public function getMessagesForWidget(string $sessionId, string $client_token): Collection
     {
         $expirationHours = (int) config('api.session.expiration_hours', env('SESSION_EXPIRATION_HOURS', 3));
+        $local_token = config('admin.widget.token', env('LOCAL_WIDGET_TOKEN'));
+
         $lastInteraction = ConversationHistoryModel::where('session_id', $sessionId)
             ->latest('updated_at')
             ->first();
@@ -62,7 +64,7 @@ class ConversationHistory
         if ($lastInteraction) {
             $lastActiveTime = Carbon::parse($lastInteraction->updated_at);
 
-            if ($lastActiveTime->diffInHours(now()) >= $expirationHours) {
+            if (($lastActiveTime->diffInHours(now()) >= $expirationHours) && ($client_token != $local_token)) {
                 throw new SessionExpiredException('Session has expired due to inactivity.');
             }
         }

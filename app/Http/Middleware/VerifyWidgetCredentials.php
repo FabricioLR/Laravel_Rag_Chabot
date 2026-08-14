@@ -16,7 +16,17 @@ class VerifyWidgetCredentials
     public function handle(Request $request, Closure $next): Response
     {
         $token = $request->header('X-Client-Token') ?? $request->input('token');
-        $origin = $request->header('Origin') ?? $request->header('Referer');
+        $origin = $request->header('Origin');
+
+        if (!$origin && $referer = $request->header('Referer')) {
+            $scheme = parse_url($referer, PHP_URL_SCHEME);
+            $host   = parse_url($referer, PHP_URL_HOST);
+            $port   = parse_url($referer, PHP_URL_PORT);
+
+            if ($scheme && $host) {
+                $origin = $scheme . '://' . $host . ($port ? ':' . $port : '');
+            }
+        }
 
         if (!$token || !$origin) {
             return response()->json([

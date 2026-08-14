@@ -28,6 +28,19 @@
     </style>
 </head>
 <body class="bg-gray-50 py-12 px-6">
+    <script
+        id="chatbot-initializer"
+        data-app-url="{{ env('APP_URL') }}"
+        data-client-token="{{ env('LOCAL_WIDGET_TOKEN') }}">
+    </script>
+    
+    @if(class_exists(\Illuminate\Support\Facades\Vite::class) && \Illuminate\Support\Facades\Vite::isRunningHot())
+        @viteReactRefresh
+        @vite(['resources/css/widget.css', 'resources/js/widget-entry.jsx'])
+    @else
+        <script src="{{ asset('build/widget.js') }}" defer></script>
+    @endif
+
     <div class="max-w-5xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div class="px-8 py-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <div>
@@ -212,6 +225,8 @@
     </div>
 
     <script>
+        const sessionId = "{{ $conversation->session_id }}";
+        localStorage.setItem('chat_widget_session', sessionId);
         function toggleTelemetryFullscreen() {
             const container = document.getElementById('telemetry-container');
             const icon = document.getElementById('fullscreen-icon');
