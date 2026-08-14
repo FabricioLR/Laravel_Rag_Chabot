@@ -81,10 +81,9 @@
         <main class="flex-1 max-w-7xl w-full mx-auto p-6 sm:p-8">
 
             <!-- Header Section with Actions -->
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-gray-200 gap-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-gray-900">Metrics</h1>
-                    <p class="text-sm text-gray-500 mt-1">LLM query execution latency, token utilization, and pipeline status.</p>
+                    <h2 class="text-xl font-bold text-gray-900">Metrics</h2>
                 </div>
             </div>
 
@@ -220,8 +219,8 @@
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">#{{ $post->ID }}</td>
                                         <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">{{ $post->post_title }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($post->post_date)->format('M d, Y H:i') }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $post->indexed_at ? \Carbon\Carbon::parse($post->indexed_at)->format('M d, Y H:i') : 'Not indexed' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($post->post_date)->subHours(3)->format('M d, Y H:i') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $post->indexed_at ? \Carbon\Carbon::parse($post->indexed_at)->subHours(3)->format('M d, Y H:i') : 'Not indexed' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Indexed</span>
                                         </td>
@@ -469,7 +468,9 @@
                                 @forelse($requests_per_domain as $row)
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {{ $row->origin ?? 'Unknown' }}
+                                            <a href="?search={{ $row->origin ?? 'Unknown' }}" class="truncate cursor-pointer text-indigo-600 hover:text-indigo-900 font-semibold hover:underline">
+                                                {{ $row->origin ?? 'Unknown' }}
+                                            </a>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-gray-700">
                                             {{ number_format($row->total_requests) }}

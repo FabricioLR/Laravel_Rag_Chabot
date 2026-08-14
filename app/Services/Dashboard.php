@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Models\ConversationHistory;
 use Exception;
 
 class Dashboard
@@ -298,8 +299,13 @@ class Dashboard
     {
         Log::info('Fetching paginated user feedback logs for admin dashboard.', ['search' => $search]);
 
-        $query = DB::table('conversation_histories')
-            ->select('id', 'session_id', 'question', 'answer', 'feedback', 'created_at');
+        $query = ConversationHistory::query()
+        ->select(['id', 'session_id', 'question', 'answer', 'feedback', 'created_at'])
+        ->with(['telemetry' => function ($q) {
+            $q->select([
+                'origin', 
+            ]);
+        }]);
 
         if (!empty(trim($search))) {
             $searchTerm = '%' . trim($search) . '%';
@@ -307,7 +313,10 @@ class Dashboard
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('session_id', 'LIKE', $searchTerm)
                 ->orWhere('question', 'LIKE', $searchTerm)
-                ->orWhere('answer', 'LIKE', $searchTerm);
+                ->orWhere('answer', 'LIKE', $searchTerm)
+                ->orWhereHas('telemetry', function ($telemetryQuery) use ($searchTerm) {
+                    $telemetryQuery->where('origin', 'LIKE', $searchTerm);
+                });
             });
         }
 
