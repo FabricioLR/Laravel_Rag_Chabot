@@ -46,6 +46,11 @@ return [
         'llm_model_max_output_tokens' => env('OPENAI_LLM_MODEL_MAX_OUTPUT_TOKENS', 1024),
     ],
 
+    'voyage' => [
+        'api_key' => env('VOYAGE_API_KEY', ''),
+        'reranker_model' => env('VOYAGE_RERANKER_MODEL', 'rerank-2.5')
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

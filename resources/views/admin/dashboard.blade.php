@@ -97,10 +97,8 @@
 
             <!-- 1. LLM & Execution Latency Metrics -->
             <div class="mt-6">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">LLM Execution Performance & Token Usage</h2>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">LLM Execution OF THE DAY</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    
-                    <!-- Avg Duration (MS / Seconds) -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">Avg Latency</span>
@@ -115,31 +113,25 @@
                         </p>
                     </div>
 
-                    <!-- Avg Input Tokens -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div class="flex justify-between items-start text-gray-400">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Avg Input Tokens</span>
-                        </div>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($avg_input_tokens ?? 0) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Prompt context depth</p>
-                    </div>
-
-                    <!-- Avg Output Tokens -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div class="flex justify-between items-start text-gray-400">
-                            <span class="text-xs font-semibold uppercase tracking-wider">Avg Output Tokens</span>
-                        </div>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($avg_output_tokens ?? 0) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Generated answer length</p>
-                    </div>
-
-                    <!-- Total Token Volume -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-start text-gray-400">
                             <span class="text-xs font-semibold uppercase tracking-wider">AVG Total Tokens</span>
                         </div>
-                        <p class="text-3xl font-bold text-indigo-600 mt-2">{{ number_format($avg_total_tokens ?? 0) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Combined input + output</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($avg_total_tokens ?? 0) }}</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-start text-gray-400">
+                            <span class="text-xs font-semibold uppercase tracking-wider">Executions</span>
+                        </div>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ number_format($count_today ?? 0) }}</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-start text-gray-400">
+                            <span class="text-xs font-semibold uppercase tracking-wider"></span>
+                        </div>
+                        <p class="text-3xl font-bold text-gray-900 mt-2"></p>
                     </div>
 
                 </div>

@@ -14,18 +14,18 @@ class QueryRewriter
 
     public function rewrite(string $sessionId, string $userInput, string $conversationHistory): array
     {
-        $enabled = config("rag.query_rewriter.enabled", env("RAG_ENABLE_QUERY_REWRITER", true));
-
-        if (!$enabled) {
-            return [
-                'query' => $userInput,
-                'llm'   => null,
-            ];
-        }
-
-        [$systemPrompt, $prompt] = $this->promptBuilder->buildQueryRewriterPrompt($userInput, $conversationHistory);
-
         try {
+            $enabled = config("rag.query_rewriter.enabled", env("RAG_ENABLE_QUERY_REWRITER", true));
+
+            if (!$enabled) {
+                return [
+                    'query' => $userInput,
+                    'telemetry' => null
+                ];
+            }
+
+            [$systemPrompt, $prompt] = $this->promptBuilder->buildQueryRewriterPrompt($userInput, $conversationHistory);
+
             $llmResult = $this->llmManager->make()->generateAnswer($prompt, $systemPrompt, $sessionId);
             $rewritten = trim($llmResult['answer'] ?? '');
 
@@ -36,7 +36,7 @@ class QueryRewriter
 
             return [
                 'query' => !empty($rewritten) ? $rewritten : $userInput,
-                'llm'   => $llmResult,
+                'telemetry' => $llmResult['telemetry']
             ];
 
         } catch (\Exception $e) {
@@ -46,7 +46,7 @@ class QueryRewriter
 
             return [
                 'query' => $userInput,
-                'llm'   => null,
+                'telemetry' => null
             ];
         }
     }

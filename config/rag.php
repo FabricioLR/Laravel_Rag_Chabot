@@ -20,5 +20,8 @@ return [
     ],
     'query_rewriter' => [
         'enabled' => (bool) env('RAG_ENABLE_QUERY_REWRITER', true)
+    ],
+    'reranker' => [
+        'enabled' => (bool) env("RAG_ENABLE_RERANKER", true)
     ]
 ];

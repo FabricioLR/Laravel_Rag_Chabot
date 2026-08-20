@@ -71,7 +71,7 @@
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                     <span class="text-xs text-gray-400 font-semibold uppercase block">Total Tokens</span>
-                    <span class="text-indigo-600 font-bold font-mono">{{ ($conversation->telemetry->rewrite_total_tokens ?? 0) + ($conversation->telemetry->total_tokens ?? 0) }}</span>
+                    <span class="text-indigo-600 font-bold font-mono">{{ ($conversation->telemetry->rewrite_total_tokens ?? 0) + ($conversation->telemetry->total_tokens ?? 0) + ($conversation->telemetry->rerank_total_tokens ?? 0) }}</span>
                 </div>
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                     <span class="text-xs text-gray-400 font-semibold uppercase block">Total Duration</span>
@@ -99,7 +99,7 @@
             {{-- Pipeline Performance Breakdown --}}
             <div class="space-y-3">
                 <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Pipeline Execution Latencies</h2>
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-4 text-sm">
                     <div>
                         <span class="text-gray-500 block text-xs uppercase font-semibold">Query Rewriter LLM:</span>
                         <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->rewrite_duration_ms ?? '0' }} ms</span>
@@ -109,8 +109,12 @@
                         <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->embedding_duration_ms ?? '0' }} ms</span>
                     </div>
                     <div>
-                        <span class="text-gray-500 block text-xs uppercase font-semibold">Vector Context Search:</span>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Hybrid Search:</span>
                         <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->database_duration_ms ?? '0' }} ms</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block text-xs uppercase font-semibold">Reranker:</span>
+                        <span class="font-mono text-gray-800 font-medium">{{ $conversation->telemetry->rerank_duration_ms ?? '0' }} ms</span>
                     </div>
                     <div>
                         <span class="text-gray-500 block text-xs uppercase font-semibold">Main LLM Generation:</span>
@@ -155,6 +159,16 @@
                         <div class="flex justify-between font-bold border-t border-dashed border-gray-200 pt-2 text-indigo-700">
                             <span>Main Answer Total:</span>
                             <span>{{ $conversation->telemetry->total_tokens ?? 0 }} tokens</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Reranker Tokens</h2>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-2.5 text-sm">
+                        <div class="flex justify-between font-bold text-indigo-700">
+                            <span>Reranker Total:</span>
+                            <span>{{ $conversation->telemetry->rerank_total_tokens ?? 0 }} tokens</span>
                         </div>
                     </div>
                 </div>

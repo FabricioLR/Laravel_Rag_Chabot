@@ -11,6 +11,7 @@ use App\Services\DomainManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class DashboardController extends Controller
@@ -60,6 +61,8 @@ class DashboardController extends Controller
     public function details($id): View
     {
         $conversation = ConversationHistory::with('telemetry')->findOrFail($id);
+
+        Log::debug("CONVERSATION DATA: ", ['data' => $conversation]);
 
         return view('admin.details', compact('conversation'));
     }

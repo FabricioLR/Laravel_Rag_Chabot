@@ -16,6 +16,8 @@ class GenerationTelemetry extends Model
     'rewrite_completion_tokens',
     'rewrite_total_tokens',
     'rewrite_duration_ms',
+    'rerank_total_tokens',
+    'rerank_duration_ms',
     'model',
     'temperature',
     'max_tokens',

@@ -6,23 +6,64 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class Knowledge
+class HybridSearchService
 {
-    public function searchContext(string $userInput, array $vectorArray, ?string $mainCategory = null, ?string $childCategory = null): array {
-        $startTime = microtime(true);
-        $vectorString = '[' . implode(',', $vectorArray) . ']';
 
+    public function retrieveFormatedContext(string $query, array $vector, ?string $mainCategory = null, ?string $childCategory = null): array {
         $maxVectorDistance = config("rag.search.max_distance", env("RAG_MAX_VECTOR_DISTANCE", 0.45));
         $maxRetrievalChunks = config("rag.search.max_chunks", env("RAG_MAX_RETRIEVAL_CHUNKS", 4));
         $minimumRffScore = config("rag.search.min_rff_score", env("RAG_MIN_RFF_SCORE", 0.015));
         $rffKValue = config("rag.search.rff_k", env("RAG_RFF_K_VALUE", 60));
 
+        [$context, $duration] = $this->retrieveContext($query, $vector, $maxVectorDistance, $maxRetrievalChunks, $minimumRffScore, $rffKValue, $mainCategory, $childCategory);
+
+        if (empty($context)) {
+            Log::warning('Hybrid Search returned 0 results.', [
+                'duration_ms' => $duration,
+                'user_input' => $query,
+                'main_category' => $mainCategory,
+                'child_category' => $childCategory
+            ]);
+            
+            return [
+                'context' => [],
+                'telemetry' => [
+                    'duration' => $duration
+                ]
+            ];    
+        }
+
+        Log::info('Hybrid search execution completed.', [
+            'duration_ms' => $duration,
+            'results_count' => count($context)
+        ]);
+
+        $reranker_enabled = config("rag.reranker.enabled", env("RAG_ENABLE_RERANKER", true));
+        if ($reranker_enabled){
+            $result = $this->formatFinalContextForReranker($context);
+        } else {
+            $result = $this->expandContext($context);
+        }
+
+        return [
+            'context' => $result,
+            'telemetry' => [
+                'duration' => $duration
+            ]
+        ];
+    }
+
+    public function retrieveContext(string $query, array $vector, float $maxVectorDistance, float $maxRetrievalChunks, float $minimumRffScore, float $rffKValue, ?string $mainCategory = null, ?string $childCategory = null){
+        $startTime = microtime(true);
+
+        $vectorString = '[' . implode(',', $vector) . ']';
+
         $bindings = [
             'vector1' => $vectorString,
             'vector2' => $vectorString,
             'vector3' => $vectorString,
-            'input1'  => $userInput,
-            'input2'  => $userInput,
+            'input1'  => $query,
+            'input2'  => $query,
             'vectorDistance' => $maxVectorDistance,
             'chunks' => $maxRetrievalChunks,
             'rffScore' => $minimumRffScore,
@@ -59,92 +100,66 @@ class Knowledge
             }
         }
 
-        $results = DB::connection('pgvector')->select("
-            SELECT
-                searches.id,
-                searches.text,
-                searches.metadata,
-                sum(rrf_score(searches.rank::int, :rrfK1)) AS score
-            FROM (
-                (
-                    SELECT
-                        id,
-                        text,
-                        metadata,
-                        rank() OVER (ORDER BY :vector1::vector <=> embedding) AS rank
-                    FROM vectors
-                    WHERE (:vector2::vector <=> embedding) < :vectorDistance
-                    {$categoryFilter1}
-                    ORDER BY :vector3::vector <=> embedding
-                    LIMIT 40
-                )
-                UNION ALL
-                (
-                    SELECT
-                        id,
-                        text,
-                        metadata,
-                        rank() OVER (ORDER BY ts_rank_cd(to_tsvector('portuguese', text), plainto_tsquery('portuguese', :input1)) DESC) AS rank
-                    FROM vectors
-                    WHERE
-                        plainto_tsquery('portuguese', :input2) @@ to_tsvector('portuguese', text)
-                        {$categoryFilter2}
-                    ORDER BY rank
-                    LIMIT 40
-                )
-            ) searches
-            GROUP BY searches.id, searches.text, searches.metadata
-            HAVING sum(rrf_score(searches.rank::int, :rrfK2)) > :rffScore
-            ORDER BY score DESC
-            LIMIT :chunks;
-        ", $bindings);
+        try{
+            $context = DB::connection('pgvector')->select("
+                SELECT
+                    searches.id,
+                    searches.text,
+                    searches.metadata,
+                    sum(rrf_score(searches.rank::int, :rrfK1)) AS score
+                FROM (
+                    (
+                        SELECT
+                            id,
+                            text,
+                            metadata,
+                            rank() OVER (ORDER BY :vector1::vector <=> embedding) AS rank
+                        FROM vectors
+                        WHERE (:vector2::vector <=> embedding) < :vectorDistance
+                        {$categoryFilter1}
+                        ORDER BY :vector3::vector <=> embedding
+                        LIMIT 40
+                    )
+                    UNION ALL
+                    (
+                        SELECT
+                            id,
+                            text,
+                            metadata,
+                            rank() OVER (ORDER BY ts_rank_cd(to_tsvector('portuguese', text), plainto_tsquery('portuguese', :input1)) DESC) AS rank
+                        FROM vectors
+                        WHERE
+                            plainto_tsquery('portuguese', :input2) @@ to_tsvector('portuguese', text)
+                            {$categoryFilter2}
+                        ORDER BY rank
+                        LIMIT 40
+                    )
+                ) searches
+                GROUP BY searches.id, searches.text, searches.metadata
+                HAVING sum(rrf_score(searches.rank::int, :rrfK2)) > :rffScore
+                ORDER BY score DESC
+                LIMIT :chunks;
+            ", $bindings);
 
-        $duration = round((microtime(true) - $startTime) * 1000, 2);
+            $duration = round((microtime(true) - $startTime) * 1000, 2);
 
-        if (empty($results)) {
-            Log::warning('Hybrid Search returned 0 results.', [
-                'duration_ms' => $duration,
-                'user_input' => $userInput,
-                'main_category' => $mainCategory,
-                'child_category' => $childCategory
-            ]);
+            return [$context, $duration];
+        } catch (Exception $e){
+            Log::error("Hybrid search query failed", ['error' => $e->getMessage()]);
 
-            if ($mainCategory == null && $childCategory == null){
-                return [
-                    'context' => "Nada relacionado foi encontrado.",
-                    'duration' => $duration
-                ];    
-            }
-            
             return [
-                'context' => "",
-                'duration' => $duration
+                'context' => [],
+                'duration' => 0
             ];
         }
-
-        Log::info('Hybrid search execution completed.', [
-            'duration_ms' => $duration,
-            'results_count' => count($results)
-        ]);
-
-        $expandedContext = $this->buildWindowContext($results);
-
-        return [
-            'context' => $expandedContext,
-            'duration' => $duration
-        ];
     }
 
 
-    private function buildWindowContext(array $results): string
+    private function expandContext(array $results): array
     {
         $charsPerToken = config('rag.context.chars_per_token', env('RAG_CHARS_PER_TOKEN', 2.7));
         $maxContextTokens = config('rag.context.max_tokens', env('RAG_MAX_CONTEXT_TOKENS', 6000));
         $maxChars = (int) ($maxContextTokens * $charsPerToken);
-
-        if (empty($results)) {
-            return '';
-        }
 
         $contextBlocks = [];
         $currentChars = 0;
@@ -171,7 +186,7 @@ class Knowledge
 
         $currentChars = $this->calculateTotalChars($contextBlocks);
         if ($currentChars >= $maxChars) {
-            return $this->formatFinalContext($contextBlocks, $maxChars);
+            return [$this->formatFinalContext($contextBlocks, $maxChars)];
         }
 
         $missingRequests = [];
@@ -221,9 +236,7 @@ class Knowledge
             }
         }
 
-        $result = $this->formatFinalContext($contextBlocks, $maxChars);
-
-        return $result;
+        return [$this->formatFinalContext($contextBlocks, $maxChars)];
     }
     private function calculateTotalChars(array $contextBlocks): int
     {
@@ -244,7 +257,7 @@ class Knowledge
             $cohesiveText = implode("\n\n", $block['chunks']);
             $rendered = $this->renderTag($block['title'], $block['url'], $cohesiveText);
 
-            if (mb_strlen($out . $rendered) > $maxChars) {
+            if (mb_strlen($out . $rendered) > $maxChars && ($maxChars != -1)) {
                 break;
             }
 
@@ -252,6 +265,30 @@ class Knowledge
         }
 
         return $out;
+    }
+
+    private function formatFinalContextForReranker(array $context): array
+    {
+        $contextBlocks = [];
+        foreach ($context as $item) {
+            $metadata = is_string($item->metadata) ? json_decode($item->metadata, true) : (array) $item->metadata;
+            $postId = $metadata['source_post_id'] ?? ('fallback_' . $item->id);
+
+            if (!isset($contextBlocks[$postId])) {
+                $contextBlocks[$postId] = [
+                    'title' => $metadata['source_post_title'] ?? 'N/A',
+                    'url'   => $metadata['source_post_url'] ?? 'N/A',
+                    'text' => $item->text ?? 'N/A'
+                ];
+            }
+        }
+
+        $formatted = [];
+        foreach ($contextBlocks as $block) {
+            $formatted[] = $this->renderTag($block['title'], $block['url'], $block['text']);
+        }
+
+        return $formatted;
     }
     private function renderTag(string $title, string $url, string $text): string
     {

@@ -18,21 +18,19 @@ class Dashboard
         try {
             $metrics = DB::table('generation_telemetries')
                 ->selectRaw('
+                    COUNT(*) as total_count,
                     AVG(total_duration_ms) as avg_total_duration_ms,
-                    AVG(prompt_tokens + COALESCE(rewrite_prompt_tokens, 0)) as avg_input_tokens,
-                    AVG(completion_tokens + COALESCE(rewrite_completion_tokens, 0)) as avg_output_tokens,
-                    AVG(total_tokens + COALESCE(rewrite_total_tokens, 0)) as avg_total_tokens
+                    AVG(total_tokens + COALESCE(rewrite_total_tokens, 0) + COALESCE(rerank_total_tokens, 0)) as avg_total_tokens
                 ')
-                ->where('created_at', '>=', now()->subDays(7))
+                ->where('created_at', '>=', now()->startOfDay())
                 ->first();
 
             $avgDurationSeconds = round(($metrics->avg_total_duration_ms ?? 0) / 1000, 2);
 
             return [
+                'count_today'          => (int) ($metrics->total_count ?? 0),
                 'avg_duration_ms'      => round($metrics->avg_total_duration_ms ?? 0, 2),
                 'avg_duration_seconds' => $avgDurationSeconds,
-                'avg_input_tokens'     => (int) round($metrics->avg_input_tokens ?? 0),
-                'avg_output_tokens'    => (int) round($metrics->avg_output_tokens ?? 0),
                 'avg_total_tokens'     => (int) round($metrics->avg_total_tokens ?? 0)
             ];
 

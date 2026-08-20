@@ -24,7 +24,9 @@ class OpenaiEmbedding implements Embedding
 
             return [
                 'vector' => $response->embeddings[0]->embedding,
-                'duration' => $durationMs
+                'telemetry' => [
+                    'duration' => $durationMs
+                ]
             ];
 
         } catch (\Exception $e) {

@@ -36,7 +36,9 @@ class HuggingFace implements Embedding
 
             return [
                 'vector' => $response->json(),
-                'duration' => $duration
+                'telemetry' => [
+                    'duration' => $duration
+                ]
             ];
         } catch (\Exception $e) {
             Log::error("Hugging Face Embedding generation failed.", [
